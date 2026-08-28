@@ -4,6 +4,9 @@
   "description": "CLI foundation for Simploy v0.",
   "type": "module",
   "private": true,
+  "files": [
+    "dist"
+  ],
   "bin": {
     "simploy": "./dist/cli/index.js"
   },
@@ -12,7 +15,7 @@
   },
   "packageManager": "pnpm@10.30.3",
   "scripts": {
-    "build": "tsc --project tsconfig.build.json",
+    "build": "tsc --project tsconfig.build.json && node scripts/copy-templates.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
     "format": "biome format --write .",

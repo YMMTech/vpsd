@@ -1,0 +1,121 @@
+name: Simploy production deployment
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: simploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    environment: production
+    steps:
+      - name: Check out the exact commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Run application checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f app/package.json ]; then
+            corepack enable
+            pnpm --dir app install --frozen-lockfile
+            pnpm --dir app test --if-present
+            pnpm --dir app build --if-present
+          fi
+
+      - name: Authenticate to GitHub Container Registry
+        shell: bash
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Build and push the application image
+        shell: bash
+        run: |
+          set -euo pipefail
+          IMAGE_TAG="ghcr.io/${GITHUB_REPOSITORY,,}:${GITHUB_SHA}"
+          echo "IMAGE_TAG=$IMAGE_TAG" >> "$GITHUB_ENV"
+          docker build --pull --tag "$IMAGE_TAG" app
+          docker push "$IMAGE_TAG"
+
+      - name: Resolve the immutable image digest
+        shell: bash
+        run: |
+          set -euo pipefail
+          DIGEST="$(docker buildx imagetools inspect "$IMAGE_TAG" --format '{{.Manifest.Digest}}')"
+          case "$DIGEST" in
+            sha256:*) ;;
+            *) echo "Registry did not return an immutable image digest." >&2; exit 1 ;;
+          esac
+          echo "IMAGE_REF=ghcr.io/${GITHUB_REPOSITORY,,}@$DIGEST" >> "$GITHUB_ENV"
+
+      - name: Configure verified SSH access
+        shell: bash
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          install -d -m 700 "$HOME/.ssh"
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$HOME/.ssh/id_ed25519"
+          chmod 600 "$HOME/.ssh/id_ed25519"
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/known_hosts"
+
+      - name: Transfer Simploy deployment assets
+        shell: bash
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          set -euo pipefail
+          tar -C simploy -cf - deploy.env compose.yml Caddyfile | ssh -p 22 -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" '
+            set -eu
+            : "${SIMPLOY_DEPLOY_PATH:?SIMPLOY_DEPLOY_PATH must be provided by the VPS environment}"
+            install -d -m 0755 "$SIMPLOY_DEPLOY_PATH"
+            tar -C "$SIMPLOY_DEPLOY_PATH" -xf -
+          '
+
+      - name: Authenticate the VPS to pull the release image
+        shell: bash
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$GHCR_TOKEN" | ssh -p 22 -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" "docker login ghcr.io -u '$GITHUB_ACTOR' --password-stdin"
+
+      - name: Deploy the immutable release
+        shell: bash
+        env:
+          IMAGE_REF: ${{ env.IMAGE_REF }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          set -euo pipefail
+          ssh -p 22 -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" "APP_IMAGE='$IMAGE_REF' sh -s" <<'REMOTE'
+          set -eu
+          trap 'docker logout ghcr.io >/dev/null 2>&1 || true' EXIT
+          : "${SIMPLOY_DEPLOY_PATH:?SIMPLOY_DEPLOY_PATH must be provided by the VPS environment}"
+          : "${SIMPLOY_CADDY_CONFIG_PATH:?SIMPLOY_CADDY_CONFIG_PATH must be provided by the VPS environment}"
+          cd "$SIMPLOY_DEPLOY_PATH"
+          docker compose --env-file deploy.env -f compose.yml up -d --pull always --remove-orphans
+          set -a
+          . ./deploy.env
+          set +a
+          sudo install -D -m 0644 Caddyfile "$SIMPLOY_CADDY_CONFIG_PATH"
+          sudo env DOMAIN="$DOMAIN" APP_PORT="$APP_PORT" caddy validate --config "$SIMPLOY_CADDY_CONFIG_PATH" --adapter caddyfile
+          sudo env DOMAIN="$DOMAIN" APP_PORT="$APP_PORT" caddy reload --config "$SIMPLOY_CADDY_CONFIG_PATH" --adapter caddyfile
+          REMOTE

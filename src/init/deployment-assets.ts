@@ -1,7 +1,18 @@
-import { mkdir, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import type { InitInput } from "./input.js";
+
+const TEMPLATE_DIRECTORY = fileURLToPath(
+  new URL("../templates/", import.meta.url),
+);
+const DEPLOY_ENV_TEMPLATE_PATH = join(
+  TEMPLATE_DIRECTORY,
+  "deploy.env.template",
+);
+const COMPOSE_TEMPLATE_PATH = join(TEMPLATE_DIRECTORY, "compose.yml");
+const CADDYFILE_TEMPLATE_PATH = join(TEMPLATE_DIRECTORY, "Caddyfile");
 
 export interface CoreDeploymentAssets {
   readonly deployEnv: string;
@@ -9,30 +20,19 @@ export interface CoreDeploymentAssets {
   readonly caddyfile: string;
 }
 
-export function renderCoreDeploymentAssets(
+export async function renderCoreDeploymentAssets(
   input: InitInput,
-): CoreDeploymentAssets {
-  return {
-    deployEnv: `DOMAIN=${input.domain}\nAPP_PORT=${input.port}\n`,
-    compose: `services:
-  app:
-    image: "\${APP_IMAGE:?APP_IMAGE must be an immutable image reference}"
-    env_file:
-      - deploy.env
-    expose:
-      - "\${APP_PORT}"
-    networks:
-      - simploy-ingress
+): Promise<CoreDeploymentAssets> {
+  const [deployEnvTemplate, compose, caddyfile] = await Promise.all([
+    readFile(DEPLOY_ENV_TEMPLATE_PATH, "utf8"),
+    readFile(COMPOSE_TEMPLATE_PATH, "utf8"),
+    readFile(CADDYFILE_TEMPLATE_PATH, "utf8"),
+  ]);
 
-networks:
-  simploy-ingress:
-    external: true
-    name: simploy-ingress
-`,
-    caddyfile: `{$DOMAIN} {
-  reverse_proxy app:{$APP_PORT}
-}
-`,
+  return {
+    deployEnv: applyDeploymentValues(deployEnvTemplate, input),
+    compose,
+    caddyfile,
   };
 }
 
@@ -47,10 +47,31 @@ export async function writeCoreDeploymentAssets(
   }
   await mkdir(directory, { recursive: true });
 
-  const assets = renderCoreDeploymentAssets(input);
+  const deployEnvTemplate = await readFile(DEPLOY_ENV_TEMPLATE_PATH, "utf8");
   await Promise.all([
-    writeFile(join(directory, "deploy.env"), assets.deployEnv),
-    writeFile(join(directory, "compose.yml"), assets.compose),
-    writeFile(join(directory, "Caddyfile"), assets.caddyfile),
+    writeFile(
+      join(directory, "deploy.env"),
+      applyDeploymentValues(deployEnvTemplate, input),
+    ),
+    copyFile(COMPOSE_TEMPLATE_PATH, join(directory, "compose.yml")),
+    copyFile(CADDYFILE_TEMPLATE_PATH, join(directory, "Caddyfile")),
   ]);
+}
+
+export function getCoreDeploymentTemplatePaths(): {
+  readonly deployEnv: string;
+  readonly compose: string;
+  readonly caddyfile: string;
+} {
+  return {
+    deployEnv: DEPLOY_ENV_TEMPLATE_PATH,
+    compose: COMPOSE_TEMPLATE_PATH,
+    caddyfile: CADDYFILE_TEMPLATE_PATH,
+  };
+}
+
+function applyDeploymentValues(template: string, input: InitInput): string {
+  return template
+    .replace("__DOMAIN__", input.domain)
+    .replace("__APP_PORT__", String(input.port));
 }

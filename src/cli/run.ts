@@ -1,4 +1,5 @@
 import { writeCoreDeploymentAssets } from "../init/deployment-assets.js";
+import { writeGitHubWorkflow } from "../init/github-workflow.js";
 import {
   collectInitInput,
   InitCancelledError,
@@ -88,6 +89,12 @@ export async function runCli(
         input,
         plan.conflicts.includes("simploy"),
       );
+      if (input.ci === "github") {
+        await writeGitHubWorkflow(
+          root,
+          plan.conflicts.includes(".github/workflows"),
+        );
+      }
       write("Core Simploy deployment assets created.");
       return 0;
     } catch (error) {

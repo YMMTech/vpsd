@@ -57,6 +57,32 @@ The generated workflow must be designed to:
 
 These are workflow behaviors, not Simploy runtime behaviors.
 
+## VPS Path and Caddy Configuration Boundary
+
+Simploy does not prescribe VPS deployment directories or Caddy configuration/import paths.
+
+The target VPS is assumed to be preconfigured so that the deployment account can access the required deployment location and perform the required Caddy configuration/reload operations.
+
+The generated workflow must therefore not invent or require fixed paths such as:
+
+```text
+~/simploy
+/opt/simploy
+/etc/caddy/sites/...
+```
+
+unless such paths are explicitly provided by the preconfigured VPS environment.
+
+The exact deployment location and Caddy configuration arrangement are outside Simploy's initialization contract.
+
+## Health Check and Rollback Boundary
+
+Issue 05 does not define a health-check endpoint or rollback contract.
+
+The generated workflow must not invent either behavior as part of this issue.
+
+Health-check and rollback behavior remain deferred/optional until their respective contract is defined.
+
 ## Security Requirements
 
 The generated workflow must not:

@@ -11,6 +11,7 @@ import { join } from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 import {
+  getCoreDeploymentTemplatePaths,
   renderCoreDeploymentAssets,
   writeCoreDeploymentAssets,
 } from "../src/init/deployment-assets.js";
@@ -41,9 +42,11 @@ async function makeRoot(): Promise<string> {
 }
 
 describe("core deployment assets", () => {
-  it("renders deterministic default assets with deploy.env as the only stable configuration source", () => {
-    const first = renderCoreDeploymentAssets(defaults);
-    const second = renderCoreDeploymentAssets(defaults);
+  it("renders deterministic default assets with deploy.env as the only stable configuration source", async () => {
+    const [first, second] = await Promise.all([
+      renderCoreDeploymentAssets(defaults),
+      renderCoreDeploymentAssets(defaults),
+    ]);
 
     expect(first).toEqual(second);
     expect(first.deployEnv).toBe("DOMAIN=app.localhost\nAPP_PORT=3000\n");
@@ -64,8 +67,8 @@ describe("core deployment assets", () => {
     );
   });
 
-  it("propagates custom domain and port without adding secrets", () => {
-    const assets = renderCoreDeploymentAssets({
+  it("propagates custom domain and port without adding secrets", async () => {
+    const assets = await renderCoreDeploymentAssets({
       ...defaults,
       domain: "example.com",
       port: 8080,
@@ -94,5 +97,12 @@ describe("core deployment assets", () => {
     await expect(
       readFile(join(root, "simploy", "deploy.env"), "utf8"),
     ).resolves.toBe("DOMAIN=app.localhost\nAPP_PORT=3000\n");
+    const templates = getCoreDeploymentTemplatePaths();
+    await expect(
+      readFile(join(root, "simploy", "compose.yml"), "utf8"),
+    ).resolves.toBe(await readFile(templates.compose, "utf8"));
+    await expect(
+      readFile(join(root, "simploy", "Caddyfile"), "utf8"),
+    ).resolves.toBe(await readFile(templates.caddyfile, "utf8"));
   });
 });

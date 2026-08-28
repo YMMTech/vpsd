@@ -1,0 +1,14 @@
+services:
+  app:
+    image: "${APP_IMAGE:?APP_IMAGE must be an immutable image reference}"
+    env_file:
+      - deploy.env
+    expose:
+      - "${APP_PORT}"
+    networks:
+      - simploy-ingress
+
+networks:
+  simploy-ingress:
+    external: true
+    name: simploy-ingress

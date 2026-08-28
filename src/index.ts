@@ -4,6 +4,11 @@ export {
   writeCoreDeploymentAssets,
 } from "./init/deployment-assets.js";
 export {
+  GITHUB_WORKFLOW_PATH,
+  renderGitHubWorkflow,
+  writeGitHubWorkflow,
+} from "./init/github-workflow.js";
+export {
   collectInitInput,
   DEFAULT_INIT_INPUTS,
   InitCancelledError,
