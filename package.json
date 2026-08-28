@@ -21,7 +21,8 @@
     "format": "biome format --write .",
     "presimploy": "pnpm build",
     "simploy": "node dist/cli/index.js",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:integration": "SIMPLOY_RUN_INTEGRATION_TESTS=1 vitest run --maxWorkers=1 tests/compose-caddy.integration.test.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.3.9",

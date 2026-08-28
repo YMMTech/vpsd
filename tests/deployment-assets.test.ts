@@ -65,6 +65,9 @@ describe("core deployment assets", () => {
     expect(first.compose).not.toContain("volumes:");
     expect(first.compose).not.toContain("supabase");
     expect(first.compose).toContain("simploy-ingress");
+    expect(first.compose).toContain(
+      `\${SIMPLOY_INGRESS_NETWORK:-simploy-ingress}`,
+    );
     expect(first.compose).not.toContain("caddy");
     expect(first.caddyfile).toBe(
       "{$DOMAIN} {\n  reverse_proxy app:{$APP_PORT}\n}\n",

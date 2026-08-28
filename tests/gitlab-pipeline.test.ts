@@ -38,6 +38,8 @@ describe("GitLab CI/CD pipeline", () => {
     expect(pipeline).toContain("StrictHostKeyChecking=yes");
     expect(pipeline).toContain("-p 22");
     expect(pipeline).toContain("buildah bud --format oci");
+    expect(pipeline).toContain("CI_REGISTRY_IMAGE:$CI_COMMIT_SHA");
+    expect(pipeline).toContain('buildah login --username "$CI_REGISTRY_USER"');
     expect(pipeline).toContain("buildah push --digestfile image-digest");
     expect(pipeline).toContain(
       'printf \'IMAGE_REF=%s@%s\\n\' "$CI_REGISTRY_IMAGE" "$DIGEST" > image.env',
@@ -48,16 +50,24 @@ describe("GitLab CI/CD pipeline", () => {
     expect(pipeline).toContain(
       "docker compose --env-file deploy.env -f compose.yml up -d",
     );
+    expect(pipeline).toContain("APP_IMAGE='$IMAGE_REF' sh -s");
     expect(pipeline).toContain("caddy validate");
     expect(pipeline).toContain("caddy reload");
     expect(pipeline).toContain(`${shellExpression}SIMPLOY_DEPLOY_PATH`);
     expect(pipeline).toContain(`${shellExpression}SIMPLOY_CADDY_CONFIG_PATH`);
     expect(pipeline).not.toContain("StrictHostKeyChecking=no");
+    expect(pipeline).not.toMatch(
+      /(?:-----BEGIN [A-Z ]+PRIVATE KEY-----|gh[pous]_|glpat-|ssh-(?:rsa|ed25519) )/,
+    );
     expect(pipeline).not.toContain("DOCKER_HOST");
     expect(pipeline).not.toContain("self-hosted");
     expect(pipeline).not.toContain("latest");
     expect(pipeline).not.toContain("pnpm simploy");
     expect(pipeline).not.toContain("simploy deploy");
+    expect(pipeline).not.toMatch(
+      /\bsimploy(?:d| (?:daemon|server|gateway|deploy|validate|run))\b/i,
+    );
+    expect(pipeline).not.toMatch(/\bsupabase\b/i);
     expect(pipeline).not.toContain("set -x");
   });
 

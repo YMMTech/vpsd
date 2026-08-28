@@ -52,6 +52,10 @@ describe("GitHub Actions workflow", () => {
     expect(workflow).toContain("-p 22");
     expect(workflow).toContain("docker build --pull");
     expect(workflow).toContain("docker push");
+    expect(workflow).toContain("docker login ghcr.io");
+    expect(workflow).toContain(
+      `IMAGE_TAG="ghcr.io/\${GITHUB_REPOSITORY,,}:\${GITHUB_SHA}"`,
+    );
     expect(workflow).toContain("docker buildx imagetools inspect");
     expect(workflow).toContain(
       `IMAGE_REF=ghcr.io/${shellExpression}GITHUB_REPOSITORY,,}@$DIGEST`,
@@ -68,11 +72,19 @@ describe("GitHub Actions workflow", () => {
     expect(workflow).toContain(
       "docker compose --env-file deploy.env -f compose.yml up -d",
     );
+    expect(workflow).toContain("APP_IMAGE='$IMAGE_REF' sh -s");
     expect(workflow).toContain("caddy validate");
     expect(workflow).toContain("caddy reload");
     expect(workflow).not.toContain("StrictHostKeyChecking=no");
+    expect(workflow).not.toMatch(
+      /(?:-----BEGIN [A-Z ]+PRIVATE KEY-----|gh[pous]_|glpat-|ssh-(?:rsa|ed25519) )/,
+    );
     expect(workflow).not.toContain("pnpm simploy");
     expect(workflow).not.toContain("npx simploy");
+    expect(workflow).not.toMatch(
+      /\bsimploy(?:d| (?:daemon|server|gateway|deploy|validate|run))\b/i,
+    );
+    expect(workflow).not.toMatch(/\bsupabase\b/i);
     expect(workflow).not.toContain("DOCKER_HOST");
     expect(workflow).not.toContain("self-hosted");
     expect(workflow).not.toContain("latest");

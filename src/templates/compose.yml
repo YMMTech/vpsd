@@ -11,4 +11,4 @@ services:
 networks:
   simploy-ingress:
     external: true
-    name: simploy-ingress
+    name: ${SIMPLOY_INGRESS_NETWORK:-simploy-ingress}
