@@ -80,7 +80,8 @@ describe("none application initializer", () => {
     ).resolves.toBeDefined();
     await expect(stat(join(root, selectedPath))).resolves.toBeDefined();
     await expect(stat(join(root, absentPath))).rejects.toThrow();
-    expect(output).toEqual(["Core Simploy deployment assets created."]);
+    expect(output).toHaveLength(1);
+    expect(output[0]).toContain("Simploy project initialized.");
   });
 
   it("rejects services that do not have a none-application integration", async () => {

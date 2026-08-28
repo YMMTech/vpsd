@@ -18,6 +18,7 @@ import {
   findPlanConflicts,
 } from "../init/plan.js";
 import { TerminalPrompter } from "../init/prompter.js";
+import { writeRootGitignore } from "../init/root-support-files.js";
 import { writeSupabaseIntegration } from "../init/supabase-integration.js";
 
 export type CliWriter = (message: string) => void;
@@ -106,12 +107,6 @@ export async function runCli(
           plan.conflicts.includes("app"),
         );
       }
-      if (input.services.includes("supabase")) {
-        await writeSupabaseIntegration(
-          root,
-          plan.conflicts.includes("services/supabase"),
-        );
-      }
       await writeCoreDeploymentAssets(
         root,
         input,
@@ -128,7 +123,14 @@ export async function runCli(
           plan.conflicts.includes(".gitlab-ci.yml"),
         );
       }
-      write("Core Simploy deployment assets created.");
+      if (input.services.includes("supabase")) {
+        await writeSupabaseIntegration(
+          root,
+          plan.conflicts.includes("services/supabase"),
+        );
+      }
+      await writeRootGitignore(root);
+      write(successMessage);
       return 0;
     } catch (error) {
       write(errorMessage(error));
@@ -142,6 +144,13 @@ export async function runCli(
   write("Run 'simploy --help' to see available commands.");
   return 1;
 }
+
+const successMessage = `Simploy project initialized.
+
+Next steps:
+1. Review the generated application and deployment files.
+2. Configure CI secrets: VPS_HOST, VPS_USER, SSH_PRIVATE_KEY, SSH_KNOWN_HOSTS.
+3. Commit and push when ready.`;
 
 function parseInitFlags(arguments_: readonly string[]): InitFlagValues {
   const flags: InitFlagValues = { appDefault: false };

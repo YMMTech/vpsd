@@ -127,6 +127,7 @@ describe("Supabase external-service integration", () => {
       "utf8",
     );
     expect(compose.toLowerCase()).not.toContain("supabase");
-    expect(output).toEqual(["Core Simploy deployment assets created."]);
+    expect(output).toHaveLength(1);
+    expect(output[0]).toContain("Simploy project initialized.");
   });
 });

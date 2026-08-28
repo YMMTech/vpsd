@@ -1,0 +1,8 @@
+# Simploy local and runtime environment files
+/.env
+/.env.*
+/app/.env
+/app/.env.*
+
+# This stable, non-secret deployment configuration is intentionally committed.
+!simploy/deploy.env

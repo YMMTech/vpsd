@@ -78,7 +78,8 @@ describe("simploy command surface", () => {
 
       expect(exitCode).toBe(0);
       expect(prompter.messages).toHaveLength(6);
-      expect(output).toEqual(["Core Simploy deployment assets created."]);
+      expect(output).toHaveLength(1);
+      expect(output[0]).toContain("Simploy project initialized.");
     } finally {
       await rm(root, { recursive: true, force: true });
     }

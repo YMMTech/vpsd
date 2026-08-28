@@ -36,6 +36,11 @@ export {
   findPlanConflicts,
 } from "./init/plan.js";
 export {
+  GITIGNORE_PATH,
+  getRootGitignoreTemplatePath,
+  writeRootGitignore,
+} from "./init/root-support-files.js";
+export {
   getSupabaseIntegrationTemplatePaths,
   renderSupabaseIntegrationAssets,
   SUPABASE_SERVICE_DIRECTORY,
