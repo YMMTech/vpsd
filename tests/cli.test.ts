@@ -1,4 +1,12 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readdir,
+  readFile,
+  rm,
+  stat,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -219,6 +227,107 @@ describe("simploy command surface", () => {
 
       expect(exitCode).toBe(1);
       expect(output[0]).toMatch(/^Error:/);
+    }
+  });
+
+  it("aborts on a declined managed-target replacement without writing other outputs", async () => {
+    const root = await makeRoot();
+    const output: string[] = [];
+    await mkdir(join(root, "app"));
+    await writeFile(join(root, "app", "existing.txt"), "keep me");
+
+    try {
+      const exitCode = await runCli(
+        [
+          "init",
+          "--name",
+          "my-project",
+          "--app",
+          "none",
+          "--ci",
+          "github",
+          "--services",
+          "none",
+          "--domain",
+          "example.com",
+          "--port",
+          "3000",
+        ],
+        (message) => output.push(message),
+        () => new ScriptedPrompter([], false),
+        root,
+      );
+
+      expect(exitCode).toBe(1);
+      expect(output).toEqual([
+        "Existing Simploy-managed targets: app",
+        "Initialization aborted; no project files were created.",
+      ]);
+      await expect(
+        readFile(join(root, "app", "existing.txt"), "utf8"),
+      ).resolves.toBe("keep me");
+      await expect(stat(join(root, "simploy"))).rejects.toThrow();
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it("replaces confirmed managed targets after collecting all choices", async () => {
+    const root = await makeRoot();
+    const prompter = new ScriptedPrompter([], true);
+    await mkdir(join(root, "app"));
+    await writeFile(join(root, "app", "existing.txt"), "replace me");
+
+    try {
+      const exitCode = await runCli(
+        [
+          "init",
+          "--name",
+          "my-project",
+          "--app",
+          "none",
+          "--ci",
+          "github",
+          "--services",
+          "none",
+          "--domain",
+          "example.com",
+          "--port",
+          "3000",
+        ],
+        () => undefined,
+        () => prompter,
+        root,
+      );
+
+      expect(exitCode).toBe(0);
+      expect(prompter.confirmations).toEqual(["Replace all listed targets?"]);
+      expect(await readdir(join(root, "app"))).toEqual([]);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it("reports cancellation without creating project output", async () => {
+    const root = await makeRoot();
+    const output: string[] = [];
+
+    try {
+      const exitCode = await runCli(
+        ["init"],
+        (message) => output.push(message),
+        () => new ScriptedPrompter([undefined]),
+        root,
+      );
+
+      expect(exitCode).toBe(1);
+      expect(output).toEqual([
+        "Error: Initialization input collection was cancelled.",
+      ]);
+      await expect(stat(join(root, "app"))).rejects.toThrow();
+      await expect(stat(join(root, "simploy"))).rejects.toThrow();
+    } finally {
+      await rm(root, { recursive: true, force: true });
     }
   });
 });

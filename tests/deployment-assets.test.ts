@@ -60,6 +60,10 @@ describe("core deployment assets", () => {
     );
     expect(first.compose).toContain(`expose:\n      - "${"${"}APP_PORT}"`);
     expect(first.compose).not.toContain("ports:");
+    expect(first.compose).not.toContain("privileged:");
+    expect(first.compose).not.toContain("docker.sock");
+    expect(first.compose).not.toContain("volumes:");
+    expect(first.compose).not.toContain("supabase");
     expect(first.compose).toContain("simploy-ingress");
     expect(first.compose).not.toContain("caddy");
     expect(first.caddyfile).toBe(
