@@ -1,0 +1,29 @@
+{
+  "name": "simploy",
+  "version": "0.1.0",
+  "description": "CLI foundation for Simploy v0.",
+  "type": "module",
+  "private": true,
+  "bin": {
+    "simploy": "./dist/cli/index.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@10.30.3",
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "presimploy": "pnpm build",
+    "simploy": "node dist/cli/index.js",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.3.9",
+    "@types/node": "24.10.1",
+    "typescript": "5.9.3",
+    "vitest": "4.0.16"
+  }
+}
