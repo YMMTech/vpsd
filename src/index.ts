@@ -9,6 +9,12 @@ export {
   writeGitHubWorkflow,
 } from "./init/github-workflow.js";
 export {
+  GITLAB_PIPELINE_PATH,
+  getGitLabPipelineTemplatePath,
+  renderGitLabPipeline,
+  writeGitLabPipeline,
+} from "./init/gitlab-pipeline.js";
+export {
   collectInitInput,
   DEFAULT_INIT_INPUTS,
   InitCancelledError,

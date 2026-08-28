@@ -1,5 +1,6 @@
 import { writeCoreDeploymentAssets } from "../init/deployment-assets.js";
 import { writeGitHubWorkflow } from "../init/github-workflow.js";
+import { writeGitLabPipeline } from "../init/gitlab-pipeline.js";
 import {
   collectInitInput,
   InitCancelledError,
@@ -93,6 +94,11 @@ export async function runCli(
         await writeGitHubWorkflow(
           root,
           plan.conflicts.includes(".github/workflows"),
+        );
+      } else {
+        await writeGitLabPipeline(
+          root,
+          plan.conflicts.includes(".gitlab-ci.yml"),
         );
       }
       write("Core Simploy deployment assets created.");
