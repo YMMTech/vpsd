@@ -1,3 +1,6 @@
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { runCli } from "../src/cli/run.js";
@@ -26,6 +29,10 @@ class ScriptedPrompter implements InitPrompter {
     this.confirmations.push(message);
     return this.confirmation;
   }
+}
+
+async function makeRoot(): Promise<string> {
+  return mkdtemp(join(tmpdir(), "simploy-cli-"));
 }
 
 describe("simploy command surface", () => {
@@ -59,17 +66,21 @@ describe("simploy command surface", () => {
       "example.com",
       "3001",
     ]);
-    const exitCode = await runCli(
-      ["init"],
-      (message) => output.push(message),
-      () => prompter,
-    );
+    const root = await makeRoot();
+    try {
+      const exitCode = await runCli(
+        ["init"],
+        (message) => output.push(message),
+        () => prompter,
+        root,
+      );
 
-    expect(exitCode).toBe(0);
-    expect(prompter.messages).toHaveLength(6);
-    expect(output).toEqual([
-      "Simploy initialization plan is ready. No project files were created.",
-    ]);
+      expect(exitCode).toBe(0);
+      expect(prompter.messages).toHaveLength(6);
+      expect(output).toEqual(["Core Simploy deployment assets created."]);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
   });
 
   it("prompts only for choices missing from partial flags", async () => {
@@ -79,46 +90,58 @@ describe("simploy command surface", () => {
       "example.com",
       "4000",
     ]);
-    const exitCode = await runCli(
-      ["init", "--name", "my-project", "--app", "none"],
-      () => undefined,
-      () => prompter,
-    );
+    const root = await makeRoot();
+    try {
+      const exitCode = await runCli(
+        ["init", "--name", "my-project", "--app", "none"],
+        () => undefined,
+        () => prompter,
+        root,
+      );
 
-    expect(exitCode).toBe(0);
-    expect(prompter.messages).toEqual([
-      "CI provider (github/gitlab)",
-      "Services (comma-separated: supabase; none for none)",
-      "Domain",
-      "Application port",
-    ]);
+      expect(exitCode).toBe(0);
+      expect(prompter.messages).toEqual([
+        "CI provider (github/gitlab)",
+        "Services (comma-separated: supabase; none for none)",
+        "Domain",
+        "Application port",
+      ]);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
   });
 
   it("accepts fully specified choices without prompting or confirmation", async () => {
     const prompter = new ScriptedPrompter([]);
-    const exitCode = await runCli(
-      [
-        "init",
-        "--name",
-        "my-project",
-        "--app",
-        "nextjs",
-        "--ci",
-        "github",
-        "--services",
-        "none",
-        "--domain",
-        "example.com",
-        "--port",
-        "3000",
-        "--app-default",
-      ],
-      () => undefined,
-      () => prompter,
-    );
+    const root = await makeRoot();
+    try {
+      const exitCode = await runCli(
+        [
+          "init",
+          "--name",
+          "my-project",
+          "--app",
+          "nextjs",
+          "--ci",
+          "github",
+          "--services",
+          "none",
+          "--domain",
+          "example.com",
+          "--port",
+          "3000",
+          "--app-default",
+        ],
+        () => undefined,
+        () => prompter,
+        root,
+      );
 
-    expect(exitCode).toBe(0);
-    expect(prompter.messages).toEqual([]);
+      expect(exitCode).toBe(0);
+      expect(prompter.messages).toEqual([]);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
   });
 
   it("rejects invalid identifiers, ports, and irrelevant app defaults", async () => {

@@ -1,3 +1,4 @@
+import { writeCoreDeploymentAssets } from "../init/deployment-assets.js";
 import {
   collectInitInput,
   InitCancelledError,
@@ -82,9 +83,12 @@ export async function runCli(
         write("Initialization aborted; no project files were created.");
         return 1;
       }
-      write(
-        "Simploy initialization plan is ready. No project files were created.",
+      await writeCoreDeploymentAssets(
+        root,
+        input,
+        plan.conflicts.includes("simploy"),
       );
+      write("Core Simploy deployment assets created.");
       return 0;
     } catch (error) {
       write(errorMessage(error));
