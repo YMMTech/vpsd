@@ -1,3 +1,12 @@
+import {
+  collectInitInput,
+  InitCancelledError,
+  type InitFlagValues,
+  InitInputError,
+  type InitPrompter,
+} from "../init/input.js";
+import { TerminalPrompter } from "../init/prompter.js";
+
 export type CliWriter = (message: string) => void;
 
 const writeToStdout: CliWriter = (message) => {
@@ -9,21 +18,30 @@ const rootHelp = `Usage: simploy <command>
 Simploy v0 command-line interface.
 
 Commands:
-  init    Initialize a Simploy project
+  init    Collect project initialization choices
 
 Options:
   -h, --help    Show this help message`;
 
-const initHelp = `Usage: simploy init
+const initHelp = `Usage: simploy init [options]
 
-Initialize a Simploy project.
+Collect Simploy project initialization choices.
 
-Project initialization behavior will be added in a later Simploy v0 issue.`;
+Options:
+  --name <name>          Project name
+  --app <nextjs|none>    Application
+  --ci <github|gitlab>   CI provider
+  --services <services>  Comma-separated services, or none
+  --domain <domain>      Application domain
+  --port <port>          Application TCP port
+  --app-default          Request framework defaults for Next.js
+  -h, --help             Show this help message`;
 
-export function runCli(
+export async function runCli(
   arguments_: readonly string[],
   write: CliWriter = writeToStdout,
-): number {
+  createPrompter: () => InitPrompter = () => new TerminalPrompter(),
+): Promise<number> {
   const [command, ...options] = arguments_;
 
   if (command === undefined || command === "--help" || command === "-h") {
@@ -32,20 +50,74 @@ export function runCli(
   }
 
   if (command === "init") {
-    if (
-      options.length === 0 ||
-      options.includes("--help") ||
-      options.includes("-h")
-    ) {
+    if (options.includes("--help") || options.includes("-h")) {
       write(initHelp);
       return 0;
     }
 
-    write(`Unknown option for init: ${options[0]}`);
-    return 1;
+    let flags: InitFlagValues;
+    try {
+      flags = parseInitFlags(options);
+    } catch (error) {
+      write(errorMessage(error));
+      return 1;
+    }
+
+    const prompter = createPrompter();
+    try {
+      await collectInitInput(flags, prompter);
+      write("Simploy initialization choices collected.");
+      return 0;
+    } catch (error) {
+      write(errorMessage(error));
+      return 1;
+    } finally {
+      if (prompter instanceof TerminalPrompter) prompter.close();
+    }
   }
 
   write(`Unknown command: ${command}`);
   write("Run 'simploy --help' to see available commands.");
   return 1;
+}
+
+function parseInitFlags(arguments_: readonly string[]): InitFlagValues {
+  const flags: InitFlagValues = { appDefault: false };
+
+  for (let index = 0; index < arguments_.length; index += 1) {
+    const argument = arguments_[index];
+    if (argument === undefined) {
+      throw new InitInputError("Unable to read an init option.");
+    }
+    if (argument === "--app-default") {
+      if (flags.appDefault)
+        throw new InitInputError("--app-default may only be supplied once.");
+      flags.appDefault = true;
+      continue;
+    }
+
+    const match = /^--(name|app|ci|services|domain|port)(?:=(.*))?$/.exec(
+      argument,
+    );
+    if (match === null)
+      throw new InitInputError(`Unknown option for init: ${argument}`);
+
+    const [, option, inlineValue] = match;
+    const key = option as Exclude<keyof InitFlagValues, "appDefault">;
+    if (flags[key] !== undefined)
+      throw new InitInputError(`--${key} may only be supplied once.`);
+    const value = inlineValue ?? arguments_[index + 1];
+    if (value === undefined || value.startsWith("--"))
+      throw new InitInputError(`--${key} requires a value.`);
+    flags[key] = value;
+    if (inlineValue === undefined) index += 1;
+  }
+
+  return flags;
+}
+
+function errorMessage(error: unknown): string {
+  if (error instanceof InitInputError || error instanceof InitCancelledError)
+    return `Error: ${error.message}`;
+  return "Error: Unable to collect Simploy initialization choices.";
 }
