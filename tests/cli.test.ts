@@ -73,6 +73,7 @@ describe("simploy command surface", () => {
         (message) => output.push(message),
         () => prompter,
         root,
+        async () => undefined,
       );
 
       expect(exitCode).toBe(0);
@@ -135,6 +136,7 @@ describe("simploy command surface", () => {
         () => undefined,
         () => prompter,
         root,
+        async () => undefined,
       );
 
       expect(exitCode).toBe(0);

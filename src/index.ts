@@ -21,6 +21,12 @@ export {
   InitInputError,
 } from "./init/input.js";
 export {
+  createNextJsInvocation,
+  initializeNextJsApplication,
+  NextJsInitializationError,
+  runNextJsCommand,
+} from "./init/nextjs-application.js";
+export {
   assertNoneApplicationCompatibility,
   initializeNoneApplication,
 } from "./init/none-application.js";

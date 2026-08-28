@@ -3,11 +3,11 @@ import { writeGitHubWorkflow } from "../init/github-workflow.js";
 import { writeGitLabPipeline } from "../init/gitlab-pipeline.js";
 import {
   collectInitInput,
-  InitCancelledError,
   type InitFlagValues,
   InitInputError,
   type InitPrompter,
 } from "../init/input.js";
+import { initializeNextJsApplication } from "../init/nextjs-application.js";
 import {
   assertNoneApplicationCompatibility,
   initializeNoneApplication,
@@ -20,6 +20,11 @@ import {
 import { TerminalPrompter } from "../init/prompter.js";
 
 export type CliWriter = (message: string) => void;
+export type NextJsInitializer = (
+  root: string,
+  appDefault: boolean,
+  replaceExistingDirectory: boolean,
+) => Promise<void>;
 
 const writeToStdout: CliWriter = (message) => {
   process.stdout.write(`${message}\n`);
@@ -54,6 +59,7 @@ export async function runCli(
   write: CliWriter = writeToStdout,
   createPrompter: () => InitPrompter = () => new TerminalPrompter(),
   root = process.cwd(),
+  initializeNextJs: NextJsInitializer = initializeNextJsApplication,
 ): Promise<number> {
   const [command, ...options] = arguments_;
 
@@ -92,6 +98,12 @@ export async function runCli(
       }
       if (input.app === "none") {
         await initializeNoneApplication(root, plan.conflicts.includes("app"));
+      } else {
+        await initializeNextJs(
+          root,
+          input.appDefault,
+          plan.conflicts.includes("app"),
+        );
       }
       await writeCoreDeploymentAssets(
         root,
@@ -160,7 +172,6 @@ function parseInitFlags(arguments_: readonly string[]): InitFlagValues {
 }
 
 function errorMessage(error: unknown): string {
-  if (error instanceof InitInputError || error instanceof InitCancelledError)
-    return `Error: ${error.message}`;
+  if (error instanceof Error) return `Error: ${error.message}`;
   return "Error: Unable to collect Simploy initialization choices.";
 }
