@@ -5,6 +5,11 @@ import {
   InitInputError,
   type InitPrompter,
 } from "../init/input.js";
+import {
+  confirmPlanConflicts,
+  createInitPlan,
+  findPlanConflicts,
+} from "../init/plan.js";
 import { TerminalPrompter } from "../init/prompter.js";
 
 export type CliWriter = (message: string) => void;
@@ -41,6 +46,7 @@ export async function runCli(
   arguments_: readonly string[],
   write: CliWriter = writeToStdout,
   createPrompter: () => InitPrompter = () => new TerminalPrompter(),
+  root = process.cwd(),
 ): Promise<number> {
   const [command, ...options] = arguments_;
 
@@ -65,8 +71,20 @@ export async function runCli(
 
     const prompter = createPrompter();
     try {
-      await collectInitInput(flags, prompter);
-      write("Simploy initialization choices collected.");
+      const input = await collectInitInput(flags, prompter);
+      const plan = await findPlanConflicts(createInitPlan(input, root));
+      const replacementsAccepted = await confirmPlanConflicts(
+        plan,
+        prompter,
+        write,
+      );
+      if (!replacementsAccepted) {
+        write("Initialization aborted; no project files were created.");
+        return 1;
+      }
+      write(
+        "Simploy initialization plan is ready. No project files were created.",
+      );
       return 0;
     } catch (error) {
       write(errorMessage(error));

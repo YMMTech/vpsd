@@ -6,8 +6,12 @@ import type { InitPrompter } from "../src/init/input.js";
 class ScriptedPrompter implements InitPrompter {
   public readonly messages: string[] = [];
   public readonly errors: string[] = [];
+  public readonly confirmations: string[] = [];
 
-  public constructor(private readonly answers: Array<string | undefined>) {}
+  public constructor(
+    private readonly answers: Array<string | undefined>,
+    private readonly confirmation = true,
+  ) {}
 
   public async ask(message: string): Promise<string | undefined> {
     this.messages.push(message);
@@ -16,6 +20,11 @@ class ScriptedPrompter implements InitPrompter {
 
   public showError(message: string): void {
     this.errors.push(message);
+  }
+
+  public async confirm(message: string): Promise<boolean | undefined> {
+    this.confirmations.push(message);
+    return this.confirmation;
   }
 }
 
@@ -58,7 +67,9 @@ describe("simploy command surface", () => {
 
     expect(exitCode).toBe(0);
     expect(prompter.messages).toHaveLength(6);
-    expect(output).toEqual(["Simploy initialization choices collected."]);
+    expect(output).toEqual([
+      "Simploy initialization plan is ready. No project files were created.",
+    ]);
   });
 
   it("prompts only for choices missing from partial flags", async () => {

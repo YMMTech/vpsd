@@ -5,3 +5,8 @@ export {
   InitCancelledError,
   InitInputError,
 } from "./init/input.js";
+export {
+  confirmPlanConflicts,
+  createInitPlan,
+  findPlanConflicts,
+} from "./init/plan.js";

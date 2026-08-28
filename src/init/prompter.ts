@@ -22,6 +22,29 @@ export class TerminalPrompter implements InitPrompter {
     stdout.write(`${message}\n`);
   }
 
+  public async confirm(message: string): Promise<boolean | undefined> {
+    while (true) {
+      const response = await this.ask(`${message} (y/N)`);
+      if (response === undefined) return undefined;
+      if (
+        response === "" ||
+        response === "n" ||
+        response === "N" ||
+        response === "no" ||
+        response === "NO"
+      )
+        return false;
+      if (
+        response === "y" ||
+        response === "Y" ||
+        response === "yes" ||
+        response === "YES"
+      )
+        return true;
+      this.showError("Please answer y or n.");
+    }
+  }
+
   public close(): void {
     this.#reader.close();
   }

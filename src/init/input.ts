@@ -34,6 +34,7 @@ export interface InitFlagValues {
 
 export interface InitPrompter {
   ask(message: string, defaultValue?: string): Promise<string | undefined>;
+  confirm(message: string): Promise<boolean | undefined>;
   showError(message: string): void;
 }
 
