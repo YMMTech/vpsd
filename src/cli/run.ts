@@ -9,6 +9,10 @@ import {
   type InitPrompter,
 } from "../init/input.js";
 import {
+  assertNoneApplicationCompatibility,
+  initializeNoneApplication,
+} from "../init/none-application.js";
+import {
   confirmPlanConflicts,
   createInitPlan,
   findPlanConflicts,
@@ -75,6 +79,7 @@ export async function runCli(
     const prompter = createPrompter();
     try {
       const input = await collectInitInput(flags, prompter);
+      assertNoneApplicationCompatibility(input);
       const plan = await findPlanConflicts(createInitPlan(input, root));
       const replacementsAccepted = await confirmPlanConflicts(
         plan,
@@ -84,6 +89,9 @@ export async function runCli(
       if (!replacementsAccepted) {
         write("Initialization aborted; no project files were created.");
         return 1;
+      }
+      if (input.app === "none") {
+        await initializeNoneApplication(root, plan.conflicts.includes("app"));
       }
       await writeCoreDeploymentAssets(
         root,

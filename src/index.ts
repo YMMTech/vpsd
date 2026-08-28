@@ -21,6 +21,10 @@ export {
   InitInputError,
 } from "./init/input.js";
 export {
+  assertNoneApplicationCompatibility,
+  initializeNoneApplication,
+} from "./init/none-application.js";
+export {
   confirmPlanConflicts,
   createInitPlan,
   findPlanConflicts,
