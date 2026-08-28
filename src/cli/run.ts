@@ -18,6 +18,7 @@ import {
   findPlanConflicts,
 } from "../init/plan.js";
 import { TerminalPrompter } from "../init/prompter.js";
+import { writeSupabaseIntegration } from "../init/supabase-integration.js";
 
 export type CliWriter = (message: string) => void;
 export type NextJsInitializer = (
@@ -103,6 +104,12 @@ export async function runCli(
           root,
           input.appDefault,
           plan.conflicts.includes("app"),
+        );
+      }
+      if (input.services.includes("supabase")) {
+        await writeSupabaseIntegration(
+          root,
+          plan.conflicts.includes("services/supabase"),
         );
       }
       await writeCoreDeploymentAssets(

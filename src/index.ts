@@ -35,3 +35,9 @@ export {
   createInitPlan,
   findPlanConflicts,
 } from "./init/plan.js";
+export {
+  getSupabaseIntegrationTemplatePaths,
+  renderSupabaseIntegrationAssets,
+  SUPABASE_SERVICE_DIRECTORY,
+  writeSupabaseIntegration,
+} from "./init/supabase-integration.js";

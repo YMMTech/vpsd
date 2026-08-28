@@ -1,0 +1,16 @@
+import { createBrowserClient } from "@supabase/ssr";
+
+function requiredPublicEnvironment(name: string): string {
+  const value = process.env[name];
+  if (value === undefined || value.length === 0) {
+    throw new Error(`${name} must be configured at runtime.`);
+  }
+  return value;
+}
+
+export function createSupabaseBrowserClient() {
+  return createBrowserClient(
+    requiredPublicEnvironment("NEXT_PUBLIC_SUPABASE_URL"),
+    requiredPublicEnvironment("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"),
+  );
+}
