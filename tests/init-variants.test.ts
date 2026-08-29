@@ -66,6 +66,7 @@ describe("representative initialized project variants", () => {
       async (applicationRoot) => {
         await mkdir(join(applicationRoot, "app"));
       },
+      async () => undefined,
     );
 
     expect(exitCode).toBe(0);

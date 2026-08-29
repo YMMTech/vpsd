@@ -19,7 +19,10 @@ import {
 } from "../init/plan.js";
 import { TerminalPrompter } from "../init/prompter.js";
 import { writeRootGitignore } from "../init/root-support-files.js";
-import { writeSupabaseIntegration } from "../init/supabase-integration.js";
+import {
+  installNextJsSupabaseDependencies,
+  writeSupabaseIntegration,
+} from "../init/supabase-integration.js";
 
 export type CliWriter = (message: string) => void;
 export type NextJsInitializer = (
@@ -27,6 +30,7 @@ export type NextJsInitializer = (
   appDefault: boolean,
   replaceExistingDirectory: boolean,
 ) => Promise<void>;
+export type SupabaseDependencyInstaller = (root: string) => Promise<void>;
 
 const writeToStdout: CliWriter = (message) => {
   process.stdout.write(`${message}\n`);
@@ -62,6 +66,7 @@ export async function runCli(
   createPrompter: () => InitPrompter = () => new TerminalPrompter(),
   root = process.cwd(),
   initializeNextJs: NextJsInitializer = initializeNextJsApplication,
+  installSupabaseDependencies: SupabaseDependencyInstaller = installNextJsSupabaseDependencies,
 ): Promise<number> {
   const [command, ...options] = arguments_;
 
@@ -124,6 +129,7 @@ export async function runCli(
         );
       }
       if (input.services.includes("supabase")) {
+        await installSupabaseDependencies(root);
         await writeSupabaseIntegration(
           root,
           plan.conflicts.includes("services/supabase"),

@@ -41,8 +41,12 @@ export {
   writeRootGitignore,
 } from "./init/root-support-files.js";
 export {
+  createNextJsSupabaseDependencyInvocation,
   getSupabaseIntegrationTemplatePaths,
+  installNextJsSupabaseDependencies,
+  NEXTJS_SUPABASE_PACKAGES,
   renderSupabaseIntegrationAssets,
   SUPABASE_SERVICE_DIRECTORY,
+  SupabaseDependencyError,
   writeSupabaseIntegration,
 } from "./init/supabase-integration.js";

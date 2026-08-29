@@ -15,8 +15,12 @@ import { afterEach, describe, expect, it } from "vitest";
 import { runCli } from "../src/cli/run.js";
 import type { InitPrompter } from "../src/init/input.js";
 import {
+  createNextJsSupabaseDependencyInvocation,
   getSupabaseIntegrationTemplatePaths,
+  installNextJsSupabaseDependencies,
+  NEXTJS_SUPABASE_PACKAGES,
   renderSupabaseIntegrationAssets,
+  type SupabaseDependencyInvocation,
   writeSupabaseIntegration,
 } from "../src/init/supabase-integration.js";
 
@@ -84,9 +88,27 @@ describe("Supabase external-service integration", () => {
     );
   });
 
+  it("adds the required official Supabase client dependencies with pnpm", async () => {
+    let invocation: SupabaseDependencyInvocation | undefined;
+
+    await installNextJsSupabaseDependencies("/project", async (value) => {
+      invocation = value;
+    });
+
+    expect(createNextJsSupabaseDependencyInvocation("/project")).toEqual({
+      command: "pnpm",
+      arguments: ["--dir", "app", "add", ...NEXTJS_SUPABASE_PACKAGES],
+      cwd: "/project",
+    });
+    expect(invocation).toEqual(
+      createNextJsSupabaseDependencyInvocation("/project"),
+    );
+  });
+
   it("integrates Supabase only for the generated Next.js application", async () => {
     const root = await makeRoot();
     const output: string[] = [];
+    let dependenciesInstalled = false;
 
     const exitCode = await runCli(
       [
@@ -109,6 +131,20 @@ describe("Supabase external-service integration", () => {
       root,
       async (applicationRoot) => {
         await mkdir(join(applicationRoot, "app"));
+        await writeFile(
+          join(applicationRoot, "app", "package.json"),
+          JSON.stringify({ name: "generated-next-app", dependencies: {} }),
+        );
+      },
+      async (projectRoot) => {
+        const packagePath = join(projectRoot, "app", "package.json");
+        const packageJson = JSON.parse(await readFile(packagePath, "utf8")) as {
+          dependencies: Record<string, string>;
+        };
+        packageJson.dependencies["@supabase/supabase-js"] = "installed";
+        packageJson.dependencies["@supabase/ssr"] = "installed";
+        await writeFile(packagePath, JSON.stringify(packageJson));
+        dependenciesInstalled = true;
       },
     );
 
@@ -119,6 +155,14 @@ describe("Supabase external-service integration", () => {
     await expect(
       stat(join(root, "app", "lib", "supabase", "client.ts")),
     ).resolves.toBeDefined();
+    const packageJson = JSON.parse(
+      await readFile(join(root, "app", "package.json"), "utf8"),
+    ) as { dependencies: Record<string, string> };
+    expect(dependenciesInstalled).toBe(true);
+    expect(packageJson.dependencies).toMatchObject({
+      "@supabase/supabase-js": "installed",
+      "@supabase/ssr": "installed",
+    });
     await expect(
       stat(join(root, "simploy", "compose.yml")),
     ).resolves.toBeDefined();

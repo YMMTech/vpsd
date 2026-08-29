@@ -6,11 +6,8 @@ deploy, or operate Supabase.
 ## Next.js client libraries
 
 The generated Next.js helpers use the official Supabase SSR client packages.
-Install them in `app/` before using the helpers:
-
-```bash
-pnpm add @supabase/supabase-js @supabase/ssr
-```
+When Supabase is selected, Simploy adds `@supabase/supabase-js` and
+`@supabase/ssr` to `app/package.json` with pnpm.
 
 ## Runtime configuration
 

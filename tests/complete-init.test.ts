@@ -107,6 +107,7 @@ describe("complete simploy init workflow", () => {
       async (applicationRoot) => {
         await mkdir(join(applicationRoot, "app"));
       },
+      async () => undefined,
     );
 
     expect(exitCode).toBe(0);
