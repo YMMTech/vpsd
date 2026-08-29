@@ -20,6 +20,7 @@ import {
 import { TerminalPrompter } from "../init/prompter.js";
 import { writeRootGitignore } from "../init/root-support-files.js";
 import { initializeSupabaseIntegration } from "../init/supabase-integration.js";
+import { runBundledSetupScript } from "../setup/run-setup.js";
 
 export type CliWriter = (message: string) => void;
 export type NextJsInitializer = (
@@ -31,6 +32,7 @@ export type SupabaseInitializer = (
   root: string,
   replaceExistingServiceDirectory: boolean,
 ) => Promise<void>;
+export type SetupCommandRunner = () => Promise<void>;
 
 const writeToStdout: CliWriter = (message) => {
   process.stdout.write(`${message}\n`);
@@ -41,7 +43,8 @@ const rootHelp = `Usage: simploy <command>
 Simploy v0 command-line interface.
 
 Commands:
-  init    Collect project initialization choices
+  init     Collect project initialization choices
+  setup    Prepare a supported VPS for Simploy deployments
 
 Options:
   -h, --help    Show this help message`;
@@ -60,6 +63,17 @@ Options:
   --app-default          Request framework defaults for Next.js
   -h, --help             Show this help message`;
 
+const setupHelp = `Usage: simploy setup
+
+Run Simploy's bundled Debian/Ubuntu VPS setup script.
+
+The script installs Docker Engine, Docker Compose v2, and Caddy; prepares the
+deployment user; and creates simploy-ingress. Run it with appropriate
+privileges. Configure the deployment user with DEPLOY_USER (default: simploy).
+
+Options:
+  -h, --help    Show this help message`;
+
 export async function runCli(
   arguments_: readonly string[],
   write: CliWriter = writeToStdout,
@@ -67,6 +81,7 @@ export async function runCli(
   root = process.cwd(),
   initializeNextJs: NextJsInitializer = initializeNextJsApplication,
   initializeSupabase: SupabaseInitializer = initializeSupabaseIntegration,
+  runSetupScript: SetupCommandRunner = runBundledSetupScript,
 ): Promise<number> {
   const [command, ...options] = arguments_;
 
@@ -142,6 +157,25 @@ export async function runCli(
       return 1;
     } finally {
       if (prompter instanceof TerminalPrompter) prompter.close();
+    }
+  }
+
+  if (command === "setup") {
+    if (options.includes("--help") || options.includes("-h")) {
+      write(setupHelp);
+      return 0;
+    }
+    if (options.length > 0) {
+      write("Error: simploy setup does not accept options.");
+      return 1;
+    }
+
+    try {
+      await runSetupScript();
+      return 0;
+    } catch (error) {
+      write(errorMessage(error));
+      return 1;
     }
   }
 

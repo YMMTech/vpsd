@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "description": "CLI foundation for Simploy v0.",
   "type": "module",
-  "private": true,
   "files": [
     "dist"
   ],

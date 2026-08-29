@@ -52,6 +52,7 @@ describe("simploy command surface", () => {
 
     expect(exitCode).toBe(0);
     expect(output.join("\n")).toContain("init");
+    expect(output.join("\n")).toContain("setup");
   });
 
   it("exposes help for init", async () => {
@@ -62,6 +63,60 @@ describe("simploy command surface", () => {
 
     expect(exitCode).toBe(0);
     expect(output.join("\n")).toContain("Usage: simploy init");
+  });
+
+  it("exposes help for setup without running the script", async () => {
+    const output: string[] = [];
+    let invoked = false;
+
+    const exitCode = await runCli(
+      ["setup", "--help"],
+      (message) => output.push(message),
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      async () => {
+        invoked = true;
+      },
+    );
+
+    expect(exitCode).toBe(0);
+    expect(output.join("\n")).toContain("Usage: simploy setup");
+    expect(invoked).toBe(false);
+  });
+
+  it("runs setup through its bundled-script wrapper and propagates failure", async () => {
+    const output: string[] = [];
+    let invoked = false;
+
+    const successExitCode = await runCli(
+      ["setup"],
+      () => undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      async () => {
+        invoked = true;
+      },
+    );
+    const failureExitCode = await runCli(
+      ["setup"],
+      (message) => output.push(message),
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      async () => {
+        throw new Error("setup script exited with code 23.");
+      },
+    );
+
+    expect(successExitCode).toBe(0);
+    expect(invoked).toBe(true);
+    expect(failureExitCode).toBe(1);
+    expect(output).toEqual(["Error: setup script exited with code 23."]);
   });
 
   it("collects all six choices interactively", async () => {

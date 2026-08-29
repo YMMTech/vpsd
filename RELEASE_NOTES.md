@@ -12,6 +12,9 @@ service integration material.
   - `none` creates an empty `app/` directory.
 - CI providers: GitHub Actions and GitLab CI/CD. Exactly one is selected per
   project.
+- VPS preparation is available through documented manual steps, the bundled
+  Debian/Ubuntu Bash script, or `simploy setup`. The command only runs that
+  script; it does not deploy applications or install a VPS-side Simploy service.
 - Next.js output includes a fixed `app/Dockerfile` and standalone output
   configuration for the generated CI and Compose contract.
 - External services: Supabase for Next.js projects. It creates a connection

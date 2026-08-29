@@ -50,3 +50,9 @@ export {
   SupabaseDependencyError,
   writeSupabaseIntegration,
 } from "./init/supabase-integration.js";
+export {
+  createSetupScriptInvocation,
+  getBundledSetupScriptPath,
+  runBundledSetupScript,
+  SetupScriptError,
+} from "./setup/run-setup.js";
