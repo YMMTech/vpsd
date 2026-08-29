@@ -15,6 +15,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { runCli } from "../src/cli/run.js";
 import type { InitPrompter } from "../src/init/input.js";
 import { getRootGitignoreTemplatePath } from "../src/init/root-support-files.js";
+import { initializeSupabaseIntegration } from "../src/init/supabase-integration.js";
 
 const roots: string[] = [];
 
@@ -107,7 +108,12 @@ describe("complete simploy init workflow", () => {
       async (applicationRoot) => {
         await mkdir(join(applicationRoot, "app"));
       },
-      async () => undefined,
+      async (projectRoot, replaceExistingServiceDirectory) =>
+        initializeSupabaseIntegration(
+          projectRoot,
+          replaceExistingServiceDirectory,
+          async () => undefined,
+        ),
     );
 
     expect(exitCode).toBe(0);

@@ -1,0 +1,19 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+export async function uploadStorageObject(
+  supabase: SupabaseClient,
+  bucket: string,
+  path: string,
+  file: File | Blob,
+) {
+  return supabase.storage.from(bucket).upload(path, file, { upsert: false });
+}
+
+export async function createSignedStorageUrl(
+  supabase: SupabaseClient,
+  bucket: string,
+  path: string,
+  expiresIn = 60,
+) {
+  return supabase.storage.from(bucket).createSignedUrl(path, expiresIn);
+}

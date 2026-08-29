@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { runCli } from "../src/cli/run.js";
 import type { InitPrompter } from "../src/init/input.js";
+import { initializeSupabaseIntegration } from "../src/init/supabase-integration.js";
 
 const roots: string[] = [];
 
@@ -66,7 +67,15 @@ describe("representative initialized project variants", () => {
       async (applicationRoot) => {
         await mkdir(join(applicationRoot, "app"));
       },
-      async () => undefined,
+      async (projectRoot, replaceExistingServiceDirectory) => {
+        if (services === "supabase") {
+          await initializeSupabaseIntegration(
+            projectRoot,
+            replaceExistingServiceDirectory,
+            async () => undefined,
+          );
+        }
+      },
     );
 
     expect(exitCode).toBe(0);

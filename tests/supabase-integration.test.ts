@@ -17,6 +17,7 @@ import type { InitPrompter } from "../src/init/input.js";
 import {
   createNextJsSupabaseDependencyInvocation,
   getSupabaseIntegrationTemplatePaths,
+  initializeSupabaseIntegration,
   installNextJsSupabaseDependencies,
   NEXTJS_SUPABASE_PACKAGES,
   renderSupabaseIntegrationAssets,
@@ -61,6 +62,7 @@ describe("Supabase external-service integration", () => {
 
     expect(await readdir(join(root, "services", "supabase"))).toEqual([
       "README.md",
+      "migrations",
     ]);
     const templates = getSupabaseIntegrationTemplatePaths();
     await expect(
@@ -72,6 +74,24 @@ describe("Supabase external-service integration", () => {
     await expect(
       readFile(join(root, "app", "lib", "supabase", "server.ts"), "utf8"),
     ).resolves.toBe(await readFile(templates.serverHelper, "utf8"));
+    await expect(
+      readFile(join(root, "app", "lib", "supabase", "auth.ts"), "utf8"),
+    ).resolves.toBe(await readFile(templates.authHelper, "utf8"));
+    await expect(
+      readFile(join(root, "app", "lib", "supabase", "storage.ts"), "utf8"),
+    ).resolves.toBe(await readFile(templates.storageHelper, "utf8"));
+    await expect(
+      readFile(
+        join(
+          root,
+          "services",
+          "supabase",
+          "migrations",
+          "001_initial_schema.sql",
+        ),
+        "utf8",
+      ),
+    ).resolves.toBe(await readFile(templates.initialMigration, "utf8"));
   });
 
   it("documents runtime-only credentials without writing credential values", async () => {
@@ -102,6 +122,53 @@ describe("Supabase external-service integration", () => {
     });
     expect(invocation).toEqual(
       createNextJsSupabaseDependencyInvocation("/project"),
+    );
+  });
+
+  it("makes the service own its dependencies and generated boilerplate", async () => {
+    const root = await makeRoot();
+    await mkdir(join(root, "app"));
+    await writeFile(join(root, "app", "package.json"), "{}");
+    let invocation: SupabaseDependencyInvocation | undefined;
+
+    await initializeSupabaseIntegration(root, false, async (value) => {
+      invocation = value;
+    });
+
+    expect(invocation).toEqual(createNextJsSupabaseDependencyInvocation(root));
+    await expect(
+      stat(join(root, "app", "lib", "supabase", "auth.ts")),
+    ).resolves.toBeDefined();
+    await expect(
+      stat(join(root, "app", "lib", "supabase", "storage.ts")),
+    ).resolves.toBeDefined();
+    await expect(
+      stat(
+        join(
+          root,
+          "services",
+          "supabase",
+          "migrations",
+          "001_initial_schema.sql",
+        ),
+      ),
+    ).resolves.toBeDefined();
+  });
+
+  it("provides authentication, storage, and application-owned migration material", async () => {
+    const assets = await renderSupabaseIntegrationAssets();
+    const generatedContent = Object.values(assets).join("\n");
+
+    expect(assets.authHelper).toContain("signInWithPassword");
+    expect(assets.authHelper).toContain("signOut");
+    expect(assets.storageHelper).toContain("uploadStorageObject");
+    expect(assets.storageHelper).toContain("createSignedStorageUrl");
+    expect(assets.initialMigration).toContain(
+      "create table if not exists public.todos",
+    );
+    expect(assets.initialMigration).toContain("storage.objects");
+    expect(generatedContent).not.toMatch(
+      /(?:eyJ|sb_publishable_|service_role=)/,
     );
   });
 
@@ -136,15 +203,23 @@ describe("Supabase external-service integration", () => {
           JSON.stringify({ name: "generated-next-app", dependencies: {} }),
         );
       },
-      async (projectRoot) => {
-        const packagePath = join(projectRoot, "app", "package.json");
-        const packageJson = JSON.parse(await readFile(packagePath, "utf8")) as {
-          dependencies: Record<string, string>;
-        };
-        packageJson.dependencies["@supabase/supabase-js"] = "installed";
-        packageJson.dependencies["@supabase/ssr"] = "installed";
-        await writeFile(packagePath, JSON.stringify(packageJson));
-        dependenciesInstalled = true;
+      async (projectRoot, replaceExistingServiceDirectory) => {
+        await initializeSupabaseIntegration(
+          projectRoot,
+          replaceExistingServiceDirectory,
+          async () => {
+            const packagePath = join(projectRoot, "app", "package.json");
+            const packageJson = JSON.parse(
+              await readFile(packagePath, "utf8"),
+            ) as {
+              dependencies: Record<string, string>;
+            };
+            packageJson.dependencies["@supabase/supabase-js"] = "installed";
+            packageJson.dependencies["@supabase/ssr"] = "installed";
+            await writeFile(packagePath, JSON.stringify(packageJson));
+            dependenciesInstalled = true;
+          },
+        );
       },
     );
 
@@ -154,6 +229,17 @@ describe("Supabase external-service integration", () => {
     ).resolves.toBeDefined();
     await expect(
       stat(join(root, "app", "lib", "supabase", "client.ts")),
+    ).resolves.toBeDefined();
+    await expect(
+      stat(
+        join(
+          root,
+          "services",
+          "supabase",
+          "migrations",
+          "001_initial_schema.sql",
+        ),
+      ),
     ).resolves.toBeDefined();
     const packageJson = JSON.parse(
       await readFile(join(root, "app", "package.json"), "utf8"),

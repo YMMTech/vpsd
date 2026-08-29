@@ -12,9 +12,12 @@ service integration material.
   - `none` creates an empty `app/` directory.
 - CI providers: GitHub Actions and GitLab CI/CD. Exactly one is selected per
   project.
+- Next.js output includes a fixed `app/Dockerfile` and standalone output
+  configuration for the generated CI and Compose contract.
 - External services: Supabase for Next.js projects. It creates a connection
-  contract in `services/supabase/` and browser/server helpers in the generated
-  application.
+  contract and application-owned starter migration in `services/supabase/`,
+  installs the official client packages, and adds browser/server/auth/storage
+  helpers in the generated application.
 
 The generated CI workflow builds and pushes the application image to its
 provider registry, resolves an immutable image digest, and deploys using the

@@ -1,0 +1,13 @@
+"use server";
+
+import { createSupabaseServerClient } from "./server";
+
+export async function signInWithPassword(email: string, password: string) {
+  const supabase = await createSupabaseServerClient();
+  return supabase.auth.signInWithPassword({ email, password });
+}
+
+export async function signOut() {
+  const supabase = await createSupabaseServerClient();
+  return supabase.auth.signOut();
+}

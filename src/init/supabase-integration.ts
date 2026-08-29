@@ -18,6 +18,18 @@ const NEXTJS_SERVER_TEMPLATE_PATH = join(
   TEMPLATE_DIRECTORY,
   "nextjs/supabase/server.ts.template",
 );
+const NEXTJS_AUTH_TEMPLATE_PATH = join(
+  TEMPLATE_DIRECTORY,
+  "nextjs/supabase/auth.ts.template",
+);
+const NEXTJS_STORAGE_TEMPLATE_PATH = join(
+  TEMPLATE_DIRECTORY,
+  "nextjs/supabase/storage.ts.template",
+);
+const SUPABASE_INITIAL_MIGRATION_TEMPLATE_PATH = join(
+  TEMPLATE_DIRECTORY,
+  "services/supabase/migrations/001_initial_schema.sql",
+);
 
 export const SUPABASE_SERVICE_DIRECTORY = "services/supabase";
 export const NEXTJS_SUPABASE_DIRECTORY = "app/lib/supabase";
@@ -47,6 +59,9 @@ export interface SupabaseIntegrationAssets {
   readonly contract: string;
   readonly clientHelper: string;
   readonly serverHelper: string;
+  readonly authHelper: string;
+  readonly storageHelper: string;
+  readonly initialMigration: string;
 }
 
 export function createNextJsSupabaseDependencyInvocation(
@@ -74,13 +89,39 @@ export async function installNextJsSupabaseDependencies(
 }
 
 export async function renderSupabaseIntegrationAssets(): Promise<SupabaseIntegrationAssets> {
-  const [contract, clientHelper, serverHelper] = await Promise.all([
+  const [
+    contract,
+    clientHelper,
+    serverHelper,
+    authHelper,
+    storageHelper,
+    initialMigration,
+  ] = await Promise.all([
     readFile(SUPABASE_CONTRACT_TEMPLATE_PATH, "utf8"),
     readFile(NEXTJS_CLIENT_TEMPLATE_PATH, "utf8"),
     readFile(NEXTJS_SERVER_TEMPLATE_PATH, "utf8"),
+    readFile(NEXTJS_AUTH_TEMPLATE_PATH, "utf8"),
+    readFile(NEXTJS_STORAGE_TEMPLATE_PATH, "utf8"),
+    readFile(SUPABASE_INITIAL_MIGRATION_TEMPLATE_PATH, "utf8"),
   ]);
 
-  return { contract, clientHelper, serverHelper };
+  return {
+    contract,
+    clientHelper,
+    serverHelper,
+    authHelper,
+    storageHelper,
+    initialMigration,
+  };
+}
+
+export async function initializeSupabaseIntegration(
+  root: string,
+  replaceExistingServiceDirectory: boolean,
+  runCommand: SupabaseDependencyRunner = runSupabaseDependencyCommand,
+): Promise<void> {
+  await installNextJsSupabaseDependencies(root, runCommand);
+  await writeSupabaseIntegration(root, replaceExistingServiceDirectory);
 }
 
 export async function writeSupabaseIntegration(
@@ -89,6 +130,7 @@ export async function writeSupabaseIntegration(
 ): Promise<void> {
   const serviceDirectory = join(root, SUPABASE_SERVICE_DIRECTORY);
   const applicationDirectory = join(root, NEXTJS_SUPABASE_DIRECTORY);
+  const migrationDirectory = join(serviceDirectory, "migrations");
 
   if (replaceExistingServiceDirectory) {
     await rm(serviceDirectory, { recursive: true, force: true });
@@ -97,6 +139,7 @@ export async function writeSupabaseIntegration(
   await Promise.all([
     mkdir(serviceDirectory, { recursive: true }),
     mkdir(applicationDirectory, { recursive: true }),
+    mkdir(migrationDirectory, { recursive: true }),
   ]);
   await Promise.all([
     copyFile(
@@ -111,6 +154,15 @@ export async function writeSupabaseIntegration(
       NEXTJS_SERVER_TEMPLATE_PATH,
       join(applicationDirectory, "server.ts"),
     ),
+    copyFile(NEXTJS_AUTH_TEMPLATE_PATH, join(applicationDirectory, "auth.ts")),
+    copyFile(
+      NEXTJS_STORAGE_TEMPLATE_PATH,
+      join(applicationDirectory, "storage.ts"),
+    ),
+    copyFile(
+      SUPABASE_INITIAL_MIGRATION_TEMPLATE_PATH,
+      join(migrationDirectory, "001_initial_schema.sql"),
+    ),
   ]);
 }
 
@@ -118,11 +170,17 @@ export function getSupabaseIntegrationTemplatePaths(): {
   readonly contract: string;
   readonly clientHelper: string;
   readonly serverHelper: string;
+  readonly authHelper: string;
+  readonly storageHelper: string;
+  readonly initialMigration: string;
 } {
   return {
     contract: SUPABASE_CONTRACT_TEMPLATE_PATH,
     clientHelper: NEXTJS_CLIENT_TEMPLATE_PATH,
     serverHelper: NEXTJS_SERVER_TEMPLATE_PATH,
+    authHelper: NEXTJS_AUTH_TEMPLATE_PATH,
+    storageHelper: NEXTJS_STORAGE_TEMPLATE_PATH,
+    initialMigration: SUPABASE_INITIAL_MIGRATION_TEMPLATE_PATH,
   };
 }
 

@@ -68,9 +68,11 @@ pnpm simploy init \
 ```
 
 `nextjs` invokes the official `create-next-app` generator in `app/`. Without
-`--app-default`, its normal framework prompts remain available. `none` creates
-an empty `app/` directory. Supabase currently has a Next.js integration only,
-so `--app none --services supabase` is rejected.
+`--app-default`, its normal framework prompts remain available. Simploy then
+copies a fixed `app/Dockerfile` and configures `app/next.config.mjs` for
+Next.js standalone output. `none` creates an empty `app/` directory. Supabase
+currently has a Next.js integration only, so `--app none --services supabase`
+is rejected.
 
 Initialization creates the applicable combination of:
 
@@ -141,10 +143,13 @@ Simploy has no role in this process after initialization.
 ## Service integrations
 
 Services are external connections, not infrastructure Simploy deploys. When
-Supabase is selected, Simploy copies its connection contract to
-`services/supabase/` and adds Next.js browser/server helper templates under
-`app/lib/supabase/`. The generated service documentation explains the required
-runtime values and client libraries.
+Supabase is selected, Simploy copies its connection contract and an
+application-owned starter migration to `services/supabase/`, adds the official
+`@supabase/supabase-js` and `@supabase/ssr` packages to the generated Next.js
+application, and adds browser, server, authentication, and storage helpers
+under `app/lib/supabase/`. The generated service documentation explains the
+required runtime values and client libraries. Review and apply the migration
+through the process used for your external Supabase instance.
 
 You are responsible for deploying, operating, upgrading, and backing up
 Supabase. Simploy does not add a Supabase stack, volumes, networks, or
