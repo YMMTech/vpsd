@@ -49,7 +49,17 @@ describe("GitHub Actions workflow", () => {
       `SSH_KNOWN_HOSTS: ${githubExpression} secrets.SSH_KNOWN_HOSTS }}`,
     );
     expect(workflow).toContain("StrictHostKeyChecking=yes");
-    expect(workflow).toContain("-p 22");
+    expect(workflow).toContain(
+      `VPS_PORT: ${githubExpression} vars.VPS_PORT }}`,
+    );
+    expect(workflow).toContain(`VPS_PORT="\${VPS_PORT:-22}"`);
+    expect(workflow).toContain(
+      `SIMPLOY_DEPLOY_PATH="\${SIMPLOY_DEPLOY_PATH:-/home/simploy/app}"`,
+    );
+    expect(workflow).toContain(
+      `SIMPLOY_CADDY_CONFIG_PATH="\${SIMPLOY_CADDY_CONFIG_PATH:-/etc/caddy/Caddyfile}"`,
+    );
+    expect(workflow).toContain('ssh -p "$VPS_PORT"');
     expect(workflow).toContain("docker build --pull");
     expect(workflow).toContain("docker push");
     expect(workflow).toContain("docker login ghcr.io");
@@ -67,6 +77,10 @@ describe("GitHub Actions workflow", () => {
     expect(workflow).toContain("vars.SIMPLOY_CADDY_CONFIG_PATH");
     expect(workflow).toContain("SIMPLOY_DEPLOY_PATH_B64");
     expect(workflow).toContain("SIMPLOY_CADDY_CONFIG_PATH_B64");
+    expect(workflow).toContain("sh -c 'SIMPLOY_DEPLOY_PATH=");
+    expect(workflow).not.toContain(
+      'tar -C simploy -cf - deploy.env compose.yml Caddyfile | ssh -p "$VPS_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" "SIMPLOY_DEPLOY_PATH_B64=$DEPLOY_PATH_B64 sh -s" <<',
+    );
     expect(workflow).toContain("NEXT_PUBLIC_SUPABASE_URL");
     expect(workflow).toContain("SUPABASE_SERVICE_ROLE_KEY");
     expect(workflow).toContain("--build-arg NEXT_PUBLIC_SUPABASE_URL");
@@ -74,9 +88,17 @@ describe("GitHub Actions workflow", () => {
       "docker compose --env-file deploy.env -f compose.yml up -d",
     );
     expect(workflow).toContain("APP_IMAGE_B64");
+    expect(workflow).toContain("export APP_IMAGE");
+    expect(workflow).toContain("cd app\n            corepack enable");
+    expect(workflow).toContain("pnpm run --if-present test");
+    expect(workflow).toContain("pnpm run build");
+    expect(workflow).not.toContain("pnpm --dir app");
+    expect(workflow).not.toContain("build --if-present");
     expect(workflow).toContain("caddy validate");
     expect(workflow).toContain("caddy reload");
-    expect(workflow).toContain("sudo -n");
+    expect(workflow).toContain("sudo -n /usr/bin/install");
+    expect(workflow).toContain("sudo -n /usr/bin/env");
+    expect(workflow).toContain("/usr/bin/caddy validate");
     expect(workflow).not.toContain("StrictHostKeyChecking=no");
     expect(workflow).not.toMatch(
       /(?:-----BEGIN [A-Z ]+PRIVATE KEY-----|gh[pous]_|glpat-|ssh-(?:rsa|ed25519) )/,

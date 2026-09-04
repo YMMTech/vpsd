@@ -26,10 +26,11 @@ jobs:
         run: |
           set -euo pipefail
           if [ -f app/package.json ]; then
+            cd app
             corepack enable
-            pnpm --dir app install --frozen-lockfile
-            pnpm --dir app test --if-present
-            pnpm --dir app build --if-present
+            pnpm install --frozen-lockfile
+            pnpm run --if-present test
+            pnpm run build
           fi
 
       - name: Authenticate to GitHub Container Registry
@@ -84,37 +85,37 @@ jobs:
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PORT: ${{ vars.VPS_PORT }}
           SIMPLOY_DEPLOY_PATH: ${{ vars.SIMPLOY_DEPLOY_PATH }}
         run: |
           set -euo pipefail
-          : "${SIMPLOY_DEPLOY_PATH:?Configure the SIMPLOY_DEPLOY_PATH repository variable.}"
+          VPS_PORT="${VPS_PORT:-22}"
+          SIMPLOY_DEPLOY_PATH="${SIMPLOY_DEPLOY_PATH:-/home/simploy/app}"
           DEPLOY_PATH_B64="$(printf '%s' "$SIMPLOY_DEPLOY_PATH" | base64 | tr -d '\n')"
-          tar -C simploy -cf - deploy.env compose.yml Caddyfile | ssh -p 22 -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" "SIMPLOY_DEPLOY_PATH_B64=$DEPLOY_PATH_B64 sh -s" <<'REMOTE'
-            set -eu
-            SIMPLOY_DEPLOY_PATH="$(printf '%s' "$SIMPLOY_DEPLOY_PATH_B64" | base64 -d)"
-            install -d -m 0755 "$SIMPLOY_DEPLOY_PATH"
-            tar -C "$SIMPLOY_DEPLOY_PATH" -xf -
-          REMOTE
+          tar -C simploy -cf - deploy.env compose.yml Caddyfile | ssh -p "$VPS_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" "sh -c 'SIMPLOY_DEPLOY_PATH=\$(printf %s \"\$1\" | base64 -d); install -d -m 0755 \"\$SIMPLOY_DEPLOY_PATH\"; tar -C \"\$SIMPLOY_DEPLOY_PATH\" -xf -' sh '$DEPLOY_PATH_B64'"
 
       - name: Materialize Supabase runtime configuration when selected
         shell: bash
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PORT: ${{ vars.VPS_PORT }}
           SIMPLOY_DEPLOY_PATH: ${{ vars.SIMPLOY_DEPLOY_PATH }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           set -euo pipefail
+          VPS_PORT="${VPS_PORT:-22}"
+          SIMPLOY_DEPLOY_PATH="${SIMPLOY_DEPLOY_PATH:-/home/simploy/app}"
           DEPLOY_PATH_B64="$(printf '%s' "$SIMPLOY_DEPLOY_PATH" | base64 | tr -d '\n')"
           if [ -f app/lib/supabase/client.ts ]; then
             : "${NEXT_PUBLIC_SUPABASE_URL:?Configure NEXT_PUBLIC_SUPABASE_URL.}"
             : "${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:?Configure NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.}"
             umask 077
-            printf 'NEXT_PUBLIC_SUPABASE_URL=%s\nNEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=%s\nSUPABASE_SERVICE_ROLE_KEY=%s\n' "$NEXT_PUBLIC_SUPABASE_URL" "$NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY" "${SUPABASE_SERVICE_ROLE_KEY:-}" | ssh -p 22 -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" "SIMPLOY_DEPLOY_PATH_B64=$DEPLOY_PATH_B64 sh -c 'SIMPLOY_DEPLOY_PATH=\"\$(printf %s \"\$SIMPLOY_DEPLOY_PATH_B64\" | base64 -d)\"; umask 077; cat > \"\$SIMPLOY_DEPLOY_PATH/runtime.env\"'"
+            printf 'NEXT_PUBLIC_SUPABASE_URL=%s\nNEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=%s\nSUPABASE_SERVICE_ROLE_KEY=%s\n' "$NEXT_PUBLIC_SUPABASE_URL" "$NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY" "${SUPABASE_SERVICE_ROLE_KEY:-}" | ssh -p "$VPS_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" "SIMPLOY_DEPLOY_PATH_B64=$DEPLOY_PATH_B64 sh -c 'SIMPLOY_DEPLOY_PATH=\"\$(printf %s \"\$SIMPLOY_DEPLOY_PATH_B64\" | base64 -d)\"; umask 077; cat > \"\$SIMPLOY_DEPLOY_PATH/runtime.env\"'"
           else
-            ssh -p 22 -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" "SIMPLOY_DEPLOY_PATH_B64=$DEPLOY_PATH_B64 sh -c 'SIMPLOY_DEPLOY_PATH=\"\$(printf %s \"\$SIMPLOY_DEPLOY_PATH_B64\" | base64 -d)\"; rm -f \"\$SIMPLOY_DEPLOY_PATH/runtime.env\"'"
+            ssh -p "$VPS_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" "SIMPLOY_DEPLOY_PATH_B64=$DEPLOY_PATH_B64 sh -c 'SIMPLOY_DEPLOY_PATH=\"\$(printf %s \"\$SIMPLOY_DEPLOY_PATH_B64\" | base64 -d)\"; rm -f \"\$SIMPLOY_DEPLOY_PATH/runtime.env\"'"
           fi
       - name: Authenticate the VPS to pull the release image
         shell: bash
@@ -122,9 +123,11 @@ jobs:
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PORT: ${{ vars.VPS_PORT }}
         run: |
           set -euo pipefail
-          printf '%s' "$GHCR_TOKEN" | ssh -p 22 -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" "docker login ghcr.io -u '$GITHUB_ACTOR' --password-stdin"
+          VPS_PORT="${VPS_PORT:-22}"
+          printf '%s' "$GHCR_TOKEN" | ssh -p "$VPS_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" "docker login ghcr.io -u '$GITHUB_ACTOR' --password-stdin"
 
       - name: Deploy the immutable release
         shell: bash
@@ -132,27 +135,30 @@ jobs:
           IMAGE_REF: ${{ env.IMAGE_REF }}
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PORT: ${{ vars.VPS_PORT }}
           SIMPLOY_DEPLOY_PATH: ${{ vars.SIMPLOY_DEPLOY_PATH }}
           SIMPLOY_CADDY_CONFIG_PATH: ${{ vars.SIMPLOY_CADDY_CONFIG_PATH }}
         run: |
           set -euo pipefail
-          : "${SIMPLOY_DEPLOY_PATH:?Configure the SIMPLOY_DEPLOY_PATH repository variable.}"
-          : "${SIMPLOY_CADDY_CONFIG_PATH:?Configure the SIMPLOY_CADDY_CONFIG_PATH repository variable.}"
+          VPS_PORT="${VPS_PORT:-22}"
+          SIMPLOY_DEPLOY_PATH="${SIMPLOY_DEPLOY_PATH:-/home/simploy/app}"
+          SIMPLOY_CADDY_CONFIG_PATH="${SIMPLOY_CADDY_CONFIG_PATH:-/etc/caddy/Caddyfile}"
           DEPLOY_PATH_B64="$(printf '%s' "$SIMPLOY_DEPLOY_PATH" | base64 | tr -d '\n')"
           CADDY_PATH_B64="$(printf '%s' "$SIMPLOY_CADDY_CONFIG_PATH" | base64 | tr -d '\n')"
           IMAGE_REF_B64="$(printf '%s' "$IMAGE_REF" | base64 | tr -d '\n')"
-          ssh -p 22 -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" "SIMPLOY_DEPLOY_PATH_B64=$DEPLOY_PATH_B64 SIMPLOY_CADDY_CONFIG_PATH_B64=$CADDY_PATH_B64 APP_IMAGE_B64=$IMAGE_REF_B64 sh -s" <<'REMOTE'
+          ssh -p "$VPS_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" "SIMPLOY_DEPLOY_PATH_B64=$DEPLOY_PATH_B64 SIMPLOY_CADDY_CONFIG_PATH_B64=$CADDY_PATH_B64 APP_IMAGE_B64=$IMAGE_REF_B64 sh -s" <<'REMOTE'
           set -eu
           trap 'docker logout ghcr.io >/dev/null 2>&1 || true' EXIT
           SIMPLOY_DEPLOY_PATH="$(printf '%s' "$SIMPLOY_DEPLOY_PATH_B64" | base64 -d)"
           SIMPLOY_CADDY_CONFIG_PATH="$(printf '%s' "$SIMPLOY_CADDY_CONFIG_PATH_B64" | base64 -d)"
           APP_IMAGE="$(printf '%s' "$APP_IMAGE_B64" | base64 -d)"
+          export APP_IMAGE
           cd "$SIMPLOY_DEPLOY_PATH"
           docker compose --env-file deploy.env -f compose.yml up -d --pull always --remove-orphans
           set -a
           . ./deploy.env
           set +a
-          sudo -n install -D -m 0644 Caddyfile "$SIMPLOY_CADDY_CONFIG_PATH"
-          sudo -n env DOMAIN="$DOMAIN" APP_PORT="$APP_PORT" caddy validate --config "$SIMPLOY_CADDY_CONFIG_PATH" --adapter caddyfile
-          sudo -n env DOMAIN="$DOMAIN" APP_PORT="$APP_PORT" caddy reload --config "$SIMPLOY_CADDY_CONFIG_PATH" --adapter caddyfile
+          sudo -n /usr/bin/install -D -m 0644 Caddyfile "$SIMPLOY_CADDY_CONFIG_PATH"
+          sudo -n /usr/bin/env DOMAIN="$DOMAIN" APP_PORT="$APP_PORT" /usr/bin/caddy validate --config "$SIMPLOY_CADDY_CONFIG_PATH" --adapter caddyfile
+          sudo -n /usr/bin/env DOMAIN="$DOMAIN" APP_PORT="$APP_PORT" /usr/bin/caddy reload --config "$SIMPLOY_CADDY_CONFIG_PATH" --adapter caddyfile
           REMOTE

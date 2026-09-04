@@ -326,7 +326,14 @@ SSH_PRIVATE_KEY
 SSH_KNOWN_HOSTS
 ```
 
-v0 assumes SSH port `22`.
+Generated CI defaults to SSH port `22`; operators may override it with `VPS_PORT`.
+
+Generated CI and `simploy setup` share these overridable defaults:
+
+```text
+SIMPLOY_DEPLOY_PATH=/home/simploy/app
+SIMPLOY_CADDY_CONFIG_PATH=/etc/caddy/Caddyfile
+```
 
 Simploy does not:
 

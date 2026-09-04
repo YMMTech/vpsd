@@ -27,9 +27,8 @@ target VPS. Simploy does not provision or harden it. The VPS needs:
 - persistent Caddy, outside the application's Compose lifecycle;
 - the external Docker network `simploy-ingress`, used by the application
   deployment;
-- operator-provided values for the `SIMPLOY_DEPLOY_PATH` and
-  `SIMPLOY_CADDY_CONFIG_PATH` environment variables used by the generated CI
-  workflow. Simploy does not prescribe their paths.
+- optional CI overrides for deployment path, Caddy configuration path, and SSH
+  port when the defaults do not fit the operator's host.
 
 ## Prepare a VPS
 
@@ -73,8 +72,9 @@ DEPLOY_USER=simploy simploy setup
 ```
 
 When invoked by a normal user, the CLI uses `sudo` to run the bundled script's
-installed package path. `sudo simploy setup` is not required. If the Caddy
-configuration path is needed, pass it in the same way:
+installed package path. `sudo simploy setup` is not required. By default it
+authorizes `/etc/caddy/Caddyfile` for the generated CI workflow. Override it
+only when the operator uses a different Caddy configuration path:
 
 ```bash
 DEPLOY_USER=simploy SIMPLOY_CADDY_CONFIG_PATH=/your/caddy/configuration/Caddyfile simploy setup
@@ -120,16 +120,18 @@ sudo docker network inspect simploy-ingress >/dev/null 2>&1 \
 Add the CI deployment public key to the deployment user's `.ssh/authorized_keys`
 through your normal SSH-key process. Do not replace existing authorized keys,
 generate or copy private keys to the VPS, or disable host-key verification.
-Configure the persistent Caddy service using your operator-chosen Caddy
-configuration location; Simploy does not mandate an application Caddy path.
-Pass that existing location explicitly when running setup, for example:
+The generated CI and setup script default to Caddy's standard configuration
+location, `/etc/caddy/Caddyfile`. Run setup once with that default, or pass an
+existing operator-managed location explicitly when it differs:
 
 ```sh
 sudo DEPLOY_USER=simploy SIMPLOY_CADDY_CONFIG_PATH=/your/caddy/configuration/Caddyfile \
   bash setup-vps.sh
 ```
 
-This installs the narrow non-interactive Caddy permission required by CI.
+This installs the narrow non-interactive Caddy permission required by CI for
+the effective configuration path. Without the override, it authorizes
+`/etc/caddy/Caddyfile` on the first setup run.
 
 Public `80/tcp` and `443/tcp` must reach Caddy. Do not publicly expose an
 application port merely because an application is deployed. Review your
@@ -250,10 +252,12 @@ stores, or uploads these values. Keep application runtime secrets separate from
 `simploy/deploy.env` and provide them through the appropriate protected CI and
 runtime mechanism.
 
-The existing VPS configuration values `SIMPLOY_DEPLOY_PATH` and
-`SIMPLOY_CADDY_CONFIG_PATH` must be configured as protected CI variables. The
-generated workflow passes them explicitly over SSH; it does not rely on remote
-shell profiles. For Supabase projects also configure the public CI variables
+The normal deployment requires only `VPS_HOST`, `VPS_USER`, `SSH_PRIVATE_KEY`,
+and `SSH_KNOWN_HOSTS`. Optional CI variables are `VPS_PORT` (default `22`),
+`SIMPLOY_DEPLOY_PATH` (default `/home/simploy/app`), and
+`SIMPLOY_CADDY_CONFIG_PATH` (default `/etc/caddy/Caddyfile`). The generated
+workflow passes effective values explicitly over SSH; it does not rely on
+remote shell profiles. For Supabase projects also configure the public CI variables
 `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, plus the
 protected `SUPABASE_SERVICE_ROLE_KEY` only when server-side admin operations
 need it. Public values are supplied to the image build; runtime values are

@@ -36,7 +36,14 @@ describe("GitLab CI/CD pipeline", () => {
     expect(pipeline).toContain("SSH_PRIVATE_KEY");
     expect(pipeline).toContain("SSH_KNOWN_HOSTS");
     expect(pipeline).toContain("StrictHostKeyChecking=yes");
-    expect(pipeline).toContain("-p 22");
+    expect(pipeline).toContain(`VPS_PORT="\${VPS_PORT:-22}"`);
+    expect(pipeline).toContain(
+      `SIMPLOY_DEPLOY_PATH="\${SIMPLOY_DEPLOY_PATH:-/home/simploy/app}"`,
+    );
+    expect(pipeline).toContain(
+      `SIMPLOY_CADDY_CONFIG_PATH="\${SIMPLOY_CADDY_CONFIG_PATH:-/etc/caddy/Caddyfile}"`,
+    );
+    expect(pipeline).toContain('ssh -p "$VPS_PORT"');
     expect(pipeline).toContain("buildah bud --format oci");
     expect(pipeline).toContain("CI_REGISTRY_IMAGE:$CI_COMMIT_SHA");
     expect(pipeline).toContain('buildah login --username "$CI_REGISTRY_USER"');
@@ -51,6 +58,15 @@ describe("GitLab CI/CD pipeline", () => {
       "docker compose --env-file deploy.env -f compose.yml up -d",
     );
     expect(pipeline).toContain("APP_IMAGE_B64");
+    expect(pipeline).toContain("export APP_IMAGE");
+    expect(pipeline).toContain("cd app\n        corepack enable");
+    expect(pipeline).toContain("pnpm run --if-present test");
+    expect(pipeline).toContain("pnpm run build");
+    expect(pipeline).not.toContain("pnpm --dir app");
+    expect(pipeline).not.toContain("build --if-present");
+    expect(pipeline).not.toContain(
+      'SIMPLOY_DEPLOY_PATH_B64=$DEPLOY_PATH_B64 sh -s" <<',
+    );
     expect(pipeline).toContain("caddy validate");
     expect(pipeline).toContain("caddy reload");
     expect(pipeline).toContain(`${shellExpression}SIMPLOY_DEPLOY_PATH`);
@@ -58,7 +74,9 @@ describe("GitLab CI/CD pipeline", () => {
     expect(pipeline).toContain("CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH");
     expect(pipeline).toContain("NEXT_PUBLIC_SUPABASE_URL");
     expect(pipeline).toContain("SUPABASE_SERVICE_ROLE_KEY");
-    expect(pipeline).toContain("sudo -n");
+    expect(pipeline).toContain("sudo -n /usr/bin/install");
+    expect(pipeline).toContain("sudo -n /usr/bin/env");
+    expect(pipeline).toContain("/usr/bin/caddy validate");
     expect(pipeline).not.toContain("StrictHostKeyChecking=no");
     expect(pipeline).not.toMatch(
       /(?:-----BEGIN [A-Z ]+PRIVATE KEY-----|gh[pous]_|glpat-|ssh-(?:rsa|ed25519) )/,

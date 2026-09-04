@@ -3,7 +3,8 @@
 set -euo pipefail
 
 DEPLOY_USER="${DEPLOY_USER:-simploy}"
-SIMPLOY_CADDY_CONFIG_PATH="${SIMPLOY_CADDY_CONFIG_PATH:-}"
+SIMPLOY_DEPLOY_PATH="${SIMPLOY_DEPLOY_PATH:-/home/simploy/app}"
+SIMPLOY_CADDY_CONFIG_PATH="${SIMPLOY_CADDY_CONFIG_PATH:-/etc/caddy/Caddyfile}"
 
 fail() {
   printf 'Simploy VPS setup: %s\n' "$1" >&2
@@ -163,20 +164,18 @@ if [ -z "${DEPLOY_HOME}" ]; then
 fi
 install -d -m 0700 -o "${DEPLOY_USER}" -g "${DEPLOY_USER}" "${DEPLOY_HOME}/.ssh"
 
-if [ -n "${SIMPLOY_CADDY_CONFIG_PATH}" ]; then
-  case "${SIMPLOY_CADDY_CONFIG_PATH}" in
-    /*) ;;
-    *) fail "SIMPLOY_CADDY_CONFIG_PATH must be an absolute path when configured." ;;
-  esac
-  if [[ "${SIMPLOY_CADDY_CONFIG_PATH}" =~ [[:space:]] ]]; then
-    fail "SIMPLOY_CADDY_CONFIG_PATH must not contain whitespace."
-  fi
-  printf '%s\n' \
-    "${DEPLOY_USER} ALL=(root) NOPASSWD: /usr/bin/install -D -m 0644 * ${SIMPLOY_CADDY_CONFIG_PATH}, /usr/bin/env DOMAIN=* APP_PORT=* /usr/bin/caddy validate --config ${SIMPLOY_CADDY_CONFIG_PATH} --adapter caddyfile, /usr/bin/env DOMAIN=* APP_PORT=* /usr/bin/caddy reload --config ${SIMPLOY_CADDY_CONFIG_PATH} --adapter caddyfile" \
-    > /etc/sudoers.d/simploy-caddy
-  chmod 0440 /etc/sudoers.d/simploy-caddy
-  visudo -cf /etc/sudoers.d/simploy-caddy >/dev/null
+case "${SIMPLOY_CADDY_CONFIG_PATH}" in
+  /*) ;;
+  *) fail "SIMPLOY_CADDY_CONFIG_PATH must be an absolute path." ;;
+esac
+if [[ "${SIMPLOY_CADDY_CONFIG_PATH}" =~ [[:space:]] ]]; then
+  fail "SIMPLOY_CADDY_CONFIG_PATH must not contain whitespace."
 fi
+printf '%s\n' \
+  "${DEPLOY_USER} ALL=(root) NOPASSWD: /usr/bin/install -D -m 0644 * ${SIMPLOY_CADDY_CONFIG_PATH}, /usr/bin/env DOMAIN=* APP_PORT=* /usr/bin/caddy validate --config ${SIMPLOY_CADDY_CONFIG_PATH} --adapter caddyfile, /usr/bin/env DOMAIN=* APP_PORT=* /usr/bin/caddy reload --config ${SIMPLOY_CADDY_CONFIG_PATH} --adapter caddyfile" \
+  > /etc/sudoers.d/simploy-caddy
+chmod 0440 /etc/sudoers.d/simploy-caddy
+visudo -cf /etc/sudoers.d/simploy-caddy >/dev/null
 
 if ! docker network inspect simploy-ingress >/dev/null 2>&1; then
   docker network create simploy-ingress
@@ -193,6 +192,3 @@ docker network inspect simploy-ingress
 printf '%s\n' "Simploy VPS setup completed for deployment user '${DEPLOY_USER}'."
 printf '%s\n' "Add the CI deployment public key to ${DEPLOY_HOME}/.ssh/authorized_keys if it is not already present."
 printf '%s\n' "The deployment user must start a new login session before Docker group membership takes effect."
-if [ -z "${SIMPLOY_CADDY_CONFIG_PATH}" ]; then
-  printf '%s\n' "Set SIMPLOY_CADDY_CONFIG_PATH when running setup to install the narrowly scoped non-interactive Caddy sudo permission required by CI."
-fi

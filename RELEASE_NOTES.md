@@ -53,6 +53,10 @@ SSH_KNOWN_HOSTS
 Runtime secrets belong in protected CI and runtime configuration, not in that
 file.
 
+Generated deployment CI defaults to `/home/simploy/app`,
+`/etc/caddy/Caddyfile`, and SSH port `22`. Operators can override these with
+`SIMPLOY_DEPLOY_PATH`, `SIMPLOY_CADDY_CONFIG_PATH`, and `VPS_PORT`.
+
 ## v0 limitations
 
 - Simploy is init-only; CI performs deployment after initialization.
