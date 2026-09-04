@@ -99,6 +99,7 @@ The initialized project is separated into three primary areas:
 
 ```text
 project/
+├── .git/
 ├── app/
 ├── simploy/
 ├── services/
@@ -223,6 +224,11 @@ pnpm simploy init --app nextjs --app-default
 uses the official `create-next-app` defaults without framework-specific prompts.
 
 Simploy does not modify `/etc/hosts`.
+
+Simploy creates one Git repository at the project root after generating the
+complete project. The Next.js generator is invoked with `--disable-git` so it
+does not create a nested repository in `app/`. Initializing into an existing
+Git repository remains outside v0.
 
 Initialization may run in a non-empty directory. If a Simploy-managed target already exists, Simploy asks whether to replace it. Declining aborts initialization.
 

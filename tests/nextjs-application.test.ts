@@ -43,7 +43,7 @@ describe("Next.js application initialization", () => {
   it("uses official create-next-app in app with framework prompts available", () => {
     expect(createNextJsInvocation("/project", false)).toEqual({
       command: "pnpm",
-      arguments: ["dlx", "create-next-app@latest", "app"],
+      arguments: ["dlx", "create-next-app@latest", "app", "--disable-git"],
       cwd: "/project",
     });
   });
@@ -53,6 +53,7 @@ describe("Next.js application initialization", () => {
       "dlx",
       "create-next-app@latest",
       "app",
+      "--disable-git",
       "--yes",
     ]);
   });
@@ -96,6 +97,7 @@ describe("Next.js application initialization", () => {
         "dlx",
         "create-next-app@latest",
         "app",
+        "--disable-git",
       ]);
     } finally {
       await rm(root, { recursive: true, force: true });

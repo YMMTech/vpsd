@@ -1,4 +1,9 @@
 import { writeCoreDeploymentAssets } from "../init/deployment-assets.js";
+import {
+  assertRootGitRepositoryAbsent,
+  type GitCommandRunner,
+  initializeRootGitRepository,
+} from "../init/git-repository.js";
 import { writeGitHubWorkflow } from "../init/github-workflow.js";
 import { writeGitLabPipeline } from "../init/gitlab-pipeline.js";
 import {
@@ -35,6 +40,10 @@ export type SupabaseInitializer = (
 ) => Promise<void>;
 export type SetupCommandRunner = (
   arguments_: readonly string[],
+) => Promise<void>;
+export type RootGitRepositoryInitializer = (
+  root: string,
+  runCommand?: GitCommandRunner,
 ) => Promise<void>;
 
 const writeToStdout: CliWriter = (message) => {
@@ -95,6 +104,7 @@ export async function runCli(
       replaceExistingMigrationDirectory,
     ),
   runSetupScript: SetupCommandRunner = runBundledSetupScript,
+  initializeRootGit: RootGitRepositoryInitializer = initializeRootGitRepository,
 ): Promise<number> {
   const [command, ...options] = arguments_;
 
@@ -131,6 +141,7 @@ export async function runCli(
         write("Initialization aborted; no project files were created.");
         return 1;
       }
+      await assertRootGitRepositoryAbsent(root);
       if (input.app === "none") {
         await initializeNoneApplication(root, plan.conflicts.includes("app"));
       } else {
@@ -164,6 +175,7 @@ export async function runCli(
         );
       }
       await writeRootGitignore(root);
+      await initializeRootGit(root);
       write(successMessage(input.name));
       return 0;
     } catch (error) {

@@ -97,6 +97,7 @@ The initialized project is separated into three primary areas:
 
 ```text
 project/
+├── .git/
 ├── app/
 ├── simploy/
 ├── services/
@@ -232,6 +233,11 @@ pnpm simploy init --app nextjs --app-default
 `--app-default` uses the framework defaults without asking framework-specific questions.
 
 When `none` is selected, `app/` is created empty.
+
+After all selected project files are prepared, Simploy initializes one Git
+repository at the project root. The Next.js generator receives `--disable-git`
+so it does not initialize `app/` as a nested repository. Initializing into an
+existing Git repository remains outside v0.
 
 ### 6.4 CI provider
 

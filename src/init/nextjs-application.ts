@@ -46,6 +46,7 @@ export function createNextJsInvocation(
       "dlx",
       "create-next-app@latest",
       "app",
+      "--disable-git",
       ...(appDefault ? ["--yes"] : []),
     ],
     cwd: root,

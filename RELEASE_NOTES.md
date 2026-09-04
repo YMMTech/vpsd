@@ -8,8 +8,12 @@ service integration material.
 ## Supported integrations
 
 - Applications: `nextjs` and `none`.
-  - `nextjs` invokes the official `create-next-app` generator in `app/`.
+  - `nextjs` invokes the official `create-next-app` generator in `app/` with
+    `--disable-git`.
   - `none` creates an empty `app/` directory.
+- Initialization creates one Git repository at the project root after all
+  generated project files are prepared; nested application repositories are
+  not created.
 - CI providers: GitHub Actions and GitLab CI/CD. Exactly one is selected per
   project.
 - VPS preparation is available through documented manual steps, the bundled

@@ -191,10 +191,16 @@ Next.js standalone output. `none` creates an empty `app/` directory. Supabase
 currently has a Next.js integration only, so `--app none --services supabase`
 is rejected.
 
+Simploy initializes one Git repository at the project root after preparing all
+selected files. It invokes `create-next-app` with `--disable-git`, so `app/`
+does not become a nested repository. Initializing into an existing Git
+repository remains outside v0.
+
 Initialization creates the applicable combination of:
 
 ```text
 app/
+.git/
 simploy/
   deploy.env
   compose.yml
