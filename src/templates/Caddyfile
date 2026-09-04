@@ -1,3 +1,7 @@
+{
+  https_port {$CADDY_HTTPS_PORT:443}
+}
+
 {$DOMAIN} {
-  reverse_proxy app:{$APP_PORT}
+  reverse_proxy 127.0.0.1:{$APP_PORT}
 }

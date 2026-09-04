@@ -59,7 +59,11 @@ describe("core deployment assets", () => {
       `image: "${"${"}APP_IMAGE:?APP_IMAGE must be an immutable image reference}"`,
     );
     expect(first.compose).toContain(`expose:\n      - "${"${"}APP_PORT}"`);
-    expect(first.compose).not.toContain("ports:");
+    expect(first.compose).toContain(
+      `ports:\n      - "127.0.0.1:${"${"}APP_PORT}:${"${"}APP_PORT}"`,
+    );
+    expect(first.compose).toContain("restart: unless-stopped");
+    expect(first.compose).toContain("required: false");
     expect(first.compose).not.toContain("privileged:");
     expect(first.compose).not.toContain("docker.sock");
     expect(first.compose).not.toContain("volumes:");
@@ -69,9 +73,7 @@ describe("core deployment assets", () => {
       `\${SIMPLOY_INGRESS_NETWORK:-simploy-ingress}`,
     );
     expect(first.compose).not.toContain("caddy");
-    expect(first.caddyfile).toBe(
-      "{$DOMAIN} {\n  reverse_proxy app:{$APP_PORT}\n}\n",
-    );
+    expect(first.caddyfile).toContain("reverse_proxy 127.0.0.1:{$APP_PORT}");
   });
 
   it("propagates custom domain and port without adding secrets", async () => {

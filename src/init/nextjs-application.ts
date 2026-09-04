@@ -7,6 +7,7 @@ const TEMPLATE_DIRECTORY = fileURLToPath(
   new URL("../templates/nextjs/", import.meta.url),
 );
 const DOCKERFILE_TEMPLATE_PATH = join(TEMPLATE_DIRECTORY, "Dockerfile");
+const DOCKERIGNORE_TEMPLATE_PATH = join(TEMPLATE_DIRECTORY, ".dockerignore");
 const NEXT_CONFIG_TEMPLATE_PATH = join(TEMPLATE_DIRECTORY, "next.config.mjs");
 const GENERATED_NEXT_CONFIG_PATHS = [
   "next.config.js",
@@ -15,6 +16,7 @@ const GENERATED_NEXT_CONFIG_PATHS = [
 ] as const;
 
 export const NEXTJS_DOCKERFILE_PATH = "app/Dockerfile";
+export const NEXTJS_DOCKERIGNORE_PATH = "app/.dockerignore";
 export const NEXTJS_CONFIG_PATH = "app/next.config.mjs";
 
 export interface NextJsInvocation {
@@ -108,16 +110,19 @@ export async function writeNextJsDockerBuildAssets(
   );
   await Promise.all([
     copyFile(DOCKERFILE_TEMPLATE_PATH, join(root, NEXTJS_DOCKERFILE_PATH)),
+    copyFile(DOCKERIGNORE_TEMPLATE_PATH, join(root, NEXTJS_DOCKERIGNORE_PATH)),
     copyFile(NEXT_CONFIG_TEMPLATE_PATH, join(root, NEXTJS_CONFIG_PATH)),
   ]);
 }
 
 export function getNextJsDockerBuildTemplatePaths(): {
   readonly dockerfile: string;
+  readonly dockerignore: string;
   readonly nextConfig: string;
 } {
   return {
     dockerfile: DOCKERFILE_TEMPLATE_PATH,
+    dockerignore: DOCKERIGNORE_TEMPLATE_PATH,
     nextConfig: NEXT_CONFIG_TEMPLATE_PATH,
   };
 }

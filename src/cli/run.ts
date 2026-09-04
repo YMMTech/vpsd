@@ -31,6 +31,7 @@ export type NextJsInitializer = (
 export type SupabaseInitializer = (
   root: string,
   replaceExistingServiceDirectory: boolean,
+  replaceExistingMigrationDirectory: boolean,
 ) => Promise<void>;
 export type SetupCommandRunner = () => Promise<void>;
 
@@ -80,7 +81,17 @@ export async function runCli(
   createPrompter: () => InitPrompter = () => new TerminalPrompter(),
   root = process.cwd(),
   initializeNextJs: NextJsInitializer = initializeNextJsApplication,
-  initializeSupabase: SupabaseInitializer = initializeSupabaseIntegration,
+  initializeSupabase: SupabaseInitializer = (
+    root,
+    replaceExistingServiceDirectory,
+    replaceExistingMigrationDirectory,
+  ) =>
+    initializeSupabaseIntegration(
+      root,
+      replaceExistingServiceDirectory,
+      undefined,
+      replaceExistingMigrationDirectory,
+    ),
   runSetupScript: SetupCommandRunner = runBundledSetupScript,
 ): Promise<number> {
   const [command, ...options] = arguments_;
@@ -147,10 +158,11 @@ export async function runCli(
         await initializeSupabase(
           root,
           plan.conflicts.includes("services/supabase"),
+          plan.conflicts.includes("supabase"),
         );
       }
       await writeRootGitignore(root);
-      write(successMessage);
+      write(successMessage(input.name));
       return 0;
     } catch (error) {
       write(errorMessage(error));
@@ -184,7 +196,9 @@ export async function runCli(
   return 1;
 }
 
-const successMessage = `Simploy project initialized.
+const successMessage = (name: string) => `Simploy project initialized.
+
+Project name: ${name}
 
 Next steps:
 1. Review the generated application and deployment files.

@@ -16,11 +16,15 @@ The Next.js integration adds the following application-owned helpers:
 - `app/lib/supabase/client.ts` for browser access;
 - `app/lib/supabase/server.ts` for server-side access and session cookies;
 - `app/lib/supabase/auth.ts` for password sign-in and sign-out actions;
-- `app/lib/supabase/storage.ts` for upload and signed URL helpers.
+- `app/lib/supabase/storage.ts` for upload and signed URL helpers;
+- `app/lib/supabase/admin.ts` for server-only service-role operations;
+- `app/proxy.ts` for Supabase session refresh on requests.
 
 The integration also adds the application-owned migration material in
-`services/supabase/migrations/001_initial_schema.sql`. Review and apply it to
-the external Supabase instance with the operator's chosen migration process.
+`supabase/migrations/20250101000000_initial_schema.sql`, using the naming
+convention consumed by the Supabase CLI. Review and apply it to the external
+Supabase instance with the operator's chosen migration process (for example,
+`supabase db push`).
 Simploy does not apply migrations or manage the Supabase instance.
 
 ## Runtime configuration

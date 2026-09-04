@@ -1,0 +1,19 @@
+import { createClient } from "@supabase/supabase-js";
+
+function requiredEnvironment(value: string | undefined, name: string): string {
+  if (value === undefined || value.length === 0) {
+    throw new Error(`${name} must be configured at runtime.`);
+  }
+  return value;
+}
+
+export function createSupabaseAdminClient() {
+  return createClient(
+    requiredEnvironment(process.env.NEXT_PUBLIC_SUPABASE_URL, "NEXT_PUBLIC_SUPABASE_URL"),
+    requiredEnvironment(
+      process.env.SUPABASE_SERVICE_ROLE_KEY,
+      "SUPABASE_SERVICE_ROLE_KEY",
+    ),
+    { auth: { autoRefreshToken: false, persistSession: false } },
+  );
+}

@@ -25,6 +25,7 @@ export function createInitPlan(
     managedPaths.push("services");
     for (const service of input.services) {
       managedPaths.push(`services/${service}`);
+      if (service === "supabase") managedPaths.push("supabase");
     }
   }
 

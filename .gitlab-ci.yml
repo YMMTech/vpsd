@@ -8,6 +8,29 @@
 stages:
 - test
 - secret-detection
+quality:
+  stage: test
+  image: node:22-alpine
+  script:
+    - corepack enable
+    - pnpm install --frozen-lockfile
+    - pnpm typecheck
+    - pnpm lint
+    - pnpm test
+    - pnpm build
+integration:
+  stage: test
+  image: node:22-alpine
+  services:
+    - docker:27-dind
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+  script:
+    - apk add --no-cache docker-cli
+    - corepack enable
+    - pnpm install --frozen-lockfile
+    - pnpm test:integration
 sast:
   stage: test
 include:

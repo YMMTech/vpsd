@@ -24,7 +24,10 @@ build_application_image:
       set -eu
       IMAGE_TAG="$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA"
       printf '%s' "$CI_REGISTRY_PASSWORD" | buildah login --username "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
-      buildah bud --format oci --tag "$IMAGE_TAG" app
+      buildah bud --format oci \
+        --build-arg NEXT_PUBLIC_SUPABASE_URL \
+        --build-arg NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY \
+        --tag "$IMAGE_TAG" app
       buildah push --digestfile image-digest "$IMAGE_TAG" "docker://$IMAGE_TAG"
       DIGEST="$(cat image-digest)"
       case "$DIGEST" in
@@ -45,6 +48,8 @@ deploy_production:
   resource_group: production
   environment:
     name: production
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
   before_script:
     - apk add --no-cache openssh-client tar
     - install -d -m 700 "$HOME/.ssh"
@@ -55,24 +60,39 @@ deploy_production:
   script:
     - |
       set -eu
-      tar -C simploy -cf - deploy.env compose.yml Caddyfile | ssh -p 22 -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" '
+      : "${SIMPLOY_DEPLOY_PATH:?Configure SIMPLOY_DEPLOY_PATH as a protected CI variable.}"
+      : "${SIMPLOY_CADDY_CONFIG_PATH:?Configure SIMPLOY_CADDY_CONFIG_PATH as a protected CI variable.}"
+      DEPLOY_PATH_B64="$(printf '%s' "$SIMPLOY_DEPLOY_PATH" | base64 | tr -d '\n')"
+      CADDY_PATH_B64="$(printf '%s' "$SIMPLOY_CADDY_CONFIG_PATH" | base64 | tr -d '\n')"
+      tar -C simploy -cf - deploy.env compose.yml Caddyfile | ssh -p 22 -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" "SIMPLOY_DEPLOY_PATH_B64=$DEPLOY_PATH_B64 sh -s" <<'REMOTE'
         set -eu
-        : "${SIMPLOY_DEPLOY_PATH:?SIMPLOY_DEPLOY_PATH must be provided by the VPS environment}"
+        SIMPLOY_DEPLOY_PATH="$(printf '%s' "$SIMPLOY_DEPLOY_PATH_B64" | base64 -d)"
         install -d -m 0755 "$SIMPLOY_DEPLOY_PATH"
         tar -C "$SIMPLOY_DEPLOY_PATH" -xf -
-      '
+      REMOTE
+      if [ -f app/lib/supabase/client.ts ]; then
+        : "${NEXT_PUBLIC_SUPABASE_URL:?Configure NEXT_PUBLIC_SUPABASE_URL.}"
+        : "${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:?Configure NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.}"
+        printf 'NEXT_PUBLIC_SUPABASE_URL=%s\nNEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=%s\nSUPABASE_SERVICE_ROLE_KEY=%s\n' "$NEXT_PUBLIC_SUPABASE_URL" "$NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY" "${SUPABASE_SERVICE_ROLE_KEY:-}" | ssh -p 22 -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" "SIMPLOY_DEPLOY_PATH_B64=$DEPLOY_PATH_B64 sh -c 'SIMPLOY_DEPLOY_PATH=\"\$(printf %s \"\$SIMPLOY_DEPLOY_PATH_B64\" | base64 -d)\"; umask 077; cat > \"\$SIMPLOY_DEPLOY_PATH/runtime.env\"'"
+      else
+        ssh -p 22 -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" "SIMPLOY_DEPLOY_PATH_B64=$DEPLOY_PATH_B64 sh -c 'SIMPLOY_DEPLOY_PATH=\"\$(printf %s \"\$SIMPLOY_DEPLOY_PATH_B64\" | base64 -d)\"; rm -f \"\$SIMPLOY_DEPLOY_PATH/runtime.env\"'"
+      fi
       printf '%s' "$CI_REGISTRY_PASSWORD" | ssh -p 22 -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" "docker login $CI_REGISTRY -u '$CI_REGISTRY_USER' --password-stdin"
-      ssh -p 22 -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" "CI_REGISTRY='$CI_REGISTRY' APP_IMAGE='$IMAGE_REF' sh -s" <<'REMOTE'
+      IMAGE_REF_B64="$(printf '%s' "$IMAGE_REF" | base64 | tr -d '\n')"
+      CI_REGISTRY_B64="$(printf '%s' "$CI_REGISTRY" | base64 | tr -d '\n')"
+      ssh -p 22 -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" "SIMPLOY_DEPLOY_PATH_B64=$DEPLOY_PATH_B64 SIMPLOY_CADDY_CONFIG_PATH_B64=$CADDY_PATH_B64 APP_IMAGE_B64=$IMAGE_REF_B64 CI_REGISTRY_B64=$CI_REGISTRY_B64 sh -s" <<'REMOTE'
       set -eu
+      SIMPLOY_DEPLOY_PATH="$(printf '%s' "$SIMPLOY_DEPLOY_PATH_B64" | base64 -d)"
+      SIMPLOY_CADDY_CONFIG_PATH="$(printf '%s' "$SIMPLOY_CADDY_CONFIG_PATH_B64" | base64 -d)"
+      APP_IMAGE="$(printf '%s' "$APP_IMAGE_B64" | base64 -d)"
+      CI_REGISTRY="$(printf '%s' "$CI_REGISTRY_B64" | base64 -d)"
       trap 'docker logout "$CI_REGISTRY" >/dev/null 2>&1 || true' EXIT
-      : "${SIMPLOY_DEPLOY_PATH:?SIMPLOY_DEPLOY_PATH must be provided by the VPS environment}"
-      : "${SIMPLOY_CADDY_CONFIG_PATH:?SIMPLOY_CADDY_CONFIG_PATH must be provided by the VPS environment}"
       cd "$SIMPLOY_DEPLOY_PATH"
       docker compose --env-file deploy.env -f compose.yml up -d --pull always --remove-orphans
       set -a
       . ./deploy.env
       set +a
-      sudo install -D -m 0644 Caddyfile "$SIMPLOY_CADDY_CONFIG_PATH"
-      sudo env DOMAIN="$DOMAIN" APP_PORT="$APP_PORT" caddy validate --config "$SIMPLOY_CADDY_CONFIG_PATH" --adapter caddyfile
-      sudo env DOMAIN="$DOMAIN" APP_PORT="$APP_PORT" caddy reload --config "$SIMPLOY_CADDY_CONFIG_PATH" --adapter caddyfile
+      sudo -n install -D -m 0644 Caddyfile "$SIMPLOY_CADDY_CONFIG_PATH"
+      sudo -n env DOMAIN="$DOMAIN" APP_PORT="$APP_PORT" caddy validate --config "$SIMPLOY_CADDY_CONFIG_PATH" --adapter caddyfile
+      sudo -n env DOMAIN="$DOMAIN" APP_PORT="$APP_PORT" caddy reload --config "$SIMPLOY_CADDY_CONFIG_PATH" --adapter caddyfile
       REMOTE

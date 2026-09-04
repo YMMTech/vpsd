@@ -18,6 +18,7 @@ import {
   initializeNextJsApplication,
   NEXTJS_CONFIG_PATH,
   NEXTJS_DOCKERFILE_PATH,
+  NEXTJS_DOCKERIGNORE_PATH,
   NextJsInitializationError,
   type NextJsInvocation,
 } from "../src/init/nextjs-application.js";
@@ -73,6 +74,9 @@ describe("Next.js application initialization", () => {
         readFile(join(root, NEXTJS_DOCKERFILE_PATH), "utf8"),
       ).resolves.toBe(await readFile(templates.dockerfile, "utf8"));
       await expect(
+        readFile(join(root, NEXTJS_DOCKERIGNORE_PATH), "utf8"),
+      ).resolves.toBe(await readFile(templates.dockerignore, "utf8"));
+      await expect(
         readFile(join(root, NEXTJS_CONFIG_PATH), "utf8"),
       ).resolves.toBe(await readFile(templates.nextConfig, "utf8"));
       await expect(stat(join(root, "app", "next.config.ts"))).rejects.toThrow();
@@ -81,7 +85,10 @@ describe("Next.js application initialization", () => {
         "utf8",
       );
       expect(dockerfile).toContain("/app/.next/standalone");
-      expect(dockerfile).toContain("node server.js");
+      expect(dockerfile).toContain("exec env HOSTNAME=0.0.0.0");
+      await expect(
+        readFile(join(root, NEXTJS_DOCKERIGNORE_PATH), "utf8"),
+      ).resolves.toContain("node_modules");
       await expect(
         readFile(join(root, NEXTJS_CONFIG_PATH), "utf8"),
       ).resolves.toContain('output: "standalone"');
@@ -189,6 +196,9 @@ describe("Next.js application initialization", () => {
         stat(join(root, NEXTJS_DOCKERFILE_PATH)),
       ).resolves.toBeDefined();
       await expect(stat(join(root, NEXTJS_CONFIG_PATH))).resolves.toBeDefined();
+      await expect(
+        stat(join(root, NEXTJS_DOCKERIGNORE_PATH)),
+      ).resolves.toBeDefined();
       await expect(
         stat(join(root, ".github", "workflows", "simploy-deploy.yml")),
       ).resolves.toBeDefined();

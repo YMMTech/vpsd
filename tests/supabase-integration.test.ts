@@ -62,7 +62,6 @@ describe("Supabase external-service integration", () => {
 
     expect(await readdir(join(root, "services", "supabase"))).toEqual([
       "README.md",
-      "migrations",
     ]);
     const templates = getSupabaseIntegrationTemplatePaths();
     await expect(
@@ -75,6 +74,12 @@ describe("Supabase external-service integration", () => {
       readFile(join(root, "app", "lib", "supabase", "server.ts"), "utf8"),
     ).resolves.toBe(await readFile(templates.serverHelper, "utf8"));
     await expect(
+      readFile(join(root, "app", "lib", "supabase", "admin.ts"), "utf8"),
+    ).resolves.toBe(await readFile(templates.adminHelper, "utf8"));
+    await expect(readFile(join(root, "app", "proxy.ts"), "utf8")).resolves.toBe(
+      await readFile(templates.proxyEntry, "utf8"),
+    );
+    await expect(
       readFile(join(root, "app", "lib", "supabase", "auth.ts"), "utf8"),
     ).resolves.toBe(await readFile(templates.authHelper, "utf8"));
     await expect(
@@ -84,10 +89,9 @@ describe("Supabase external-service integration", () => {
       readFile(
         join(
           root,
-          "services",
           "supabase",
           "migrations",
-          "001_initial_schema.sql",
+          "20250101000000_initial_schema.sql",
         ),
         "utf8",
       ),
@@ -146,10 +150,9 @@ describe("Supabase external-service integration", () => {
       stat(
         join(
           root,
-          "services",
           "supabase",
           "migrations",
-          "001_initial_schema.sql",
+          "20250101000000_initial_schema.sql",
         ),
       ),
     ).resolves.toBeDefined();
@@ -163,10 +166,18 @@ describe("Supabase external-service integration", () => {
     expect(assets.authHelper).toContain("signOut");
     expect(assets.storageHelper).toContain("uploadStorageObject");
     expect(assets.storageHelper).toContain("createSignedStorageUrl");
+    expect(assets.clientHelper).toContain(
+      "process.env.NEXT_PUBLIC_SUPABASE_URL",
+    );
+    expect(assets.clientHelper).not.toContain("process.env[name]");
+    expect(assets.proxyHelper).toContain("auth.getUser()");
     expect(assets.initialMigration).toContain(
       "create table if not exists public.todos",
     );
     expect(assets.initialMigration).toContain("storage.objects");
+    expect(assets.initialMigration).not.toContain(
+      "create policy if not exists",
+    );
     expect(generatedContent).not.toMatch(
       /(?:eyJ|sb_publishable_|service_role=)/,
     );
@@ -234,10 +245,9 @@ describe("Supabase external-service integration", () => {
       stat(
         join(
           root,
-          "services",
           "supabase",
           "migrations",
-          "001_initial_schema.sql",
+          "20250101000000_initial_schema.sql",
         ),
       ),
     ).resolves.toBeDefined();

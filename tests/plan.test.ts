@@ -45,6 +45,7 @@ describe("initialization planning", () => {
       "simploy",
       "services",
       "services/supabase",
+      "supabase",
       ".github/workflows",
     ]);
     expect(plan.conflicts).toEqual([]);

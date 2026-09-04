@@ -63,18 +63,20 @@ describe("GitHub Actions workflow", () => {
     expect(workflow).toContain(
       "tar -C simploy -cf - deploy.env compose.yml Caddyfile",
     );
-    expect(workflow).toContain(
-      "SIMPLOY_DEPLOY_PATH must be provided by the VPS environment",
-    );
-    expect(workflow).toContain(
-      "SIMPLOY_CADDY_CONFIG_PATH must be provided by the VPS environment",
-    );
+    expect(workflow).toContain("vars.SIMPLOY_DEPLOY_PATH");
+    expect(workflow).toContain("vars.SIMPLOY_CADDY_CONFIG_PATH");
+    expect(workflow).toContain("SIMPLOY_DEPLOY_PATH_B64");
+    expect(workflow).toContain("SIMPLOY_CADDY_CONFIG_PATH_B64");
+    expect(workflow).toContain("NEXT_PUBLIC_SUPABASE_URL");
+    expect(workflow).toContain("SUPABASE_SERVICE_ROLE_KEY");
+    expect(workflow).toContain("--build-arg NEXT_PUBLIC_SUPABASE_URL");
     expect(workflow).toContain(
       "docker compose --env-file deploy.env -f compose.yml up -d",
     );
-    expect(workflow).toContain("APP_IMAGE='$IMAGE_REF' sh -s");
+    expect(workflow).toContain("APP_IMAGE_B64");
     expect(workflow).toContain("caddy validate");
     expect(workflow).toContain("caddy reload");
+    expect(workflow).toContain("sudo -n");
     expect(workflow).not.toContain("StrictHostKeyChecking=no");
     expect(workflow).not.toMatch(
       /(?:-----BEGIN [A-Z ]+PRIVATE KEY-----|gh[pous]_|glpat-|ssh-(?:rsa|ed25519) )/,
@@ -84,7 +86,7 @@ describe("GitHub Actions workflow", () => {
     expect(workflow).not.toMatch(
       /\bsimploy(?:d| (?:daemon|server|gateway|deploy|validate|run))\b/i,
     );
-    expect(workflow).not.toMatch(/\bsupabase\b/i);
+    expect(workflow).not.toContain("supabase self-hosted");
     expect(workflow).not.toContain("DOCKER_HOST");
     expect(workflow).not.toContain("self-hosted");
     expect(workflow).not.toContain("latest");

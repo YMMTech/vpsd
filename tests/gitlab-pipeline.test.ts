@@ -50,11 +50,15 @@ describe("GitLab CI/CD pipeline", () => {
     expect(pipeline).toContain(
       "docker compose --env-file deploy.env -f compose.yml up -d",
     );
-    expect(pipeline).toContain("APP_IMAGE='$IMAGE_REF' sh -s");
+    expect(pipeline).toContain("APP_IMAGE_B64");
     expect(pipeline).toContain("caddy validate");
     expect(pipeline).toContain("caddy reload");
     expect(pipeline).toContain(`${shellExpression}SIMPLOY_DEPLOY_PATH`);
     expect(pipeline).toContain(`${shellExpression}SIMPLOY_CADDY_CONFIG_PATH`);
+    expect(pipeline).toContain("CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH");
+    expect(pipeline).toContain("NEXT_PUBLIC_SUPABASE_URL");
+    expect(pipeline).toContain("SUPABASE_SERVICE_ROLE_KEY");
+    expect(pipeline).toContain("sudo -n");
     expect(pipeline).not.toContain("StrictHostKeyChecking=no");
     expect(pipeline).not.toMatch(
       /(?:-----BEGIN [A-Z ]+PRIVATE KEY-----|gh[pous]_|glpat-|ssh-(?:rsa|ed25519) )/,
@@ -67,7 +71,7 @@ describe("GitLab CI/CD pipeline", () => {
     expect(pipeline).not.toMatch(
       /\bsimploy(?:d| (?:daemon|server|gateway|deploy|validate|run))\b/i,
     );
-    expect(pipeline).not.toMatch(/\bsupabase\b/i);
+    expect(pipeline).not.toContain("supabase self-hosted");
     expect(pipeline).not.toContain("set -x");
   });
 

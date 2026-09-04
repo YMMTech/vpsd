@@ -1,10 +1,15 @@
 services:
   app:
     image: "${APP_IMAGE:?APP_IMAGE must be an immutable image reference}"
+    restart: unless-stopped
     env_file:
       - deploy.env
+      - path: runtime.env
+        required: false
     expose:
       - "${APP_PORT}"
+    ports:
+      - "127.0.0.1:${APP_PORT}:${APP_PORT}"
     networks:
       - simploy-ingress
 

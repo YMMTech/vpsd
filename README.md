@@ -25,8 +25,8 @@ target VPS. Simploy does not provision or harden it. The VPS needs:
 - Docker and the Docker Compose plugin;
 - OpenSSH reachable by the selected CI provider;
 - persistent Caddy, outside the application's Compose lifecycle;
-- the external Docker network `simploy-ingress`, available to Caddy and the
-  application deployment;
+- the external Docker network `simploy-ingress`, used by the application
+  deployment;
 - operator-provided values for the `SIMPLOY_DEPLOY_PATH` and
   `SIMPLOY_CADDY_CONFIG_PATH` environment variables used by the generated CI
   workflow. Simploy does not prescribe their paths.
@@ -106,6 +106,14 @@ through your normal SSH-key process. Do not replace existing authorized keys,
 generate or copy private keys to the VPS, or disable host-key verification.
 Configure the persistent Caddy service using your operator-chosen Caddy
 configuration location; Simploy does not mandate an application Caddy path.
+Pass that existing location explicitly when running setup, for example:
+
+```sh
+sudo DEPLOY_USER=simploy SIMPLOY_CADDY_CONFIG_PATH=/your/caddy/configuration/Caddyfile \
+  bash setup-vps.sh
+```
+
+This installs the narrow non-interactive Caddy permission required by CI.
 
 Public `80/tcp` and `443/tcp` must reach Caddy. Do not publicly expose an
 application port merely because an application is deployed. Review your
@@ -200,9 +208,9 @@ Caddyfile. The root `.gitignore` deliberately keeps `simploy/deploy.env`
 trackable while ignoring common local environment files.
 
 The generated Compose configuration puts the application on the external
-`simploy-ingress` network and exposes its application port only inside Docker.
-Caddy remains persistent VPS infrastructure rather than an application Compose
-service.
+`simploy-ingress` network and binds its port only to VPS loopback. Persistent
+host Caddy proxies to that loopback binding, so the application is not publicly
+reachable directly and Caddy remains outside the application Compose service.
 
 ## Configure CI secrets
 
@@ -220,6 +228,15 @@ stores, or uploads these values. Keep application runtime secrets separate from
 `simploy/deploy.env` and provide them through the appropriate protected CI and
 runtime mechanism.
 
+The existing VPS configuration values `SIMPLOY_DEPLOY_PATH` and
+`SIMPLOY_CADDY_CONFIG_PATH` must be configured as protected CI variables. The
+generated workflow passes them explicitly over SSH; it does not rely on remote
+shell profiles. For Supabase projects also configure the public CI variables
+`NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, plus the
+protected `SUPABASE_SERVICE_ROLE_KEY` only when server-side admin operations
+need it. Public values are supplied to the image build; runtime values are
+written only to a restrictive VPS `runtime.env` file.
+
 ## Deployment flow
 
 After the generated files are reviewed and committed, the selected CI workflow
@@ -236,13 +253,15 @@ Simploy has no role in this process after initialization.
 ## Service integrations
 
 Services are external connections, not infrastructure Simploy deploys. When
-Supabase is selected, Simploy copies its connection contract and an
-application-owned starter migration to `services/supabase/`, adds the official
-`@supabase/supabase-js` and `@supabase/ssr` packages to the generated Next.js
-application, and adds browser, server, authentication, and storage helpers
-under `app/lib/supabase/`. The generated service documentation explains the
-required runtime values and client libraries. Review and apply the migration
-through the process used for your external Supabase instance.
+Supabase is selected, Simploy copies its connection contract to
+`services/supabase/`, adds the official `@supabase/supabase-js` and
+`@supabase/ssr` packages to the generated Next.js application, and adds
+browser, server, admin, authentication, storage, and session-refresh proxy
+helpers under `app/lib/supabase/` (with `app/proxy.ts`). The application-owned
+starter migration is at `supabase/migrations/` using the Supabase CLI timestamp
+naming convention. The generated service documentation explains the required
+runtime values and client libraries. Review and apply the migration through the
+process used for your external Supabase instance.
 
 You are responsible for deploying, operating, upgrading, and backing up
 Supabase. Simploy does not add a Supabase stack, volumes, networks, or

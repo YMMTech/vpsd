@@ -1,5 +1,5 @@
 import { execFile as execFileCallback } from "node:child_process";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { request } from "node:https";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -13,7 +13,6 @@ import type { InitInput } from "../src/init/input.js";
 const execFile = promisify(execFileCallback);
 const TEST_NETWORK = "simploy-integration-test-ingress";
 const CADDY_IMAGE = "caddy:2.10.2-alpine";
-const APPLICATION_IMAGE = "nginx:1.27-alpine";
 
 const testInput: InitInput = {
   name: "integration-test",
@@ -21,7 +20,7 @@ const testInput: InitInput = {
   ci: "github",
   services: [],
   domain: "localhost",
-  port: 80,
+  port: 18080,
   appDefault: false,
 };
 
@@ -33,6 +32,8 @@ integrationDescribe("generated Compose and Caddy assets", () => {
     const root = await mkdtemp(join(tmpdir(), "simploy-compose-caddy-"));
     const projectName = `simployintegration${Date.now()}`;
     const caddyName = `${projectName}caddy`;
+    const applicationImage = `${projectName}-app`;
+    const caddyHttpsPort = 18443;
     const deployDirectory = join(root, "simploy");
     const composeFile = join(deployDirectory, "compose.yml");
     const caddyfile = join(deployDirectory, "Caddyfile");
@@ -47,12 +48,21 @@ integrationDescribe("generated Compose and Caddy assets", () => {
     ];
     const composeEnvironment = {
       ...process.env,
-      APP_IMAGE: APPLICATION_IMAGE,
+      APP_IMAGE: applicationImage,
       SIMPLOY_INGRESS_NETWORK: TEST_NETWORK,
     };
 
     try {
       await writeCoreDeploymentAssets(root, testInput, false);
+      await writeFile(
+        join(root, "Dockerfile"),
+        "FROM nginx:1.27-alpine\nCOPY default.conf /etc/nginx/conf.d/default.conf\n",
+      );
+      await writeFile(
+        join(root, "default.conf"),
+        "server { listen 18080; location / { return 200 'Simploy ingress works'; } }\n",
+      );
+      await docker(["build", "--tag", applicationImage, root]);
       await docker(["network", "create", TEST_NETWORK]);
 
       const renderedCompose = await dockerText(
@@ -80,7 +90,7 @@ integrationDescribe("generated Compose and Caddy assets", () => {
         "{{json .NetworkSettings.Ports}}",
         applicationId,
       ]);
-      expect(portBindings).not.toContain("HostPort");
+      expect(portBindings).toContain("127.0.0.1");
 
       await docker([
         "run",
@@ -88,7 +98,7 @@ integrationDescribe("generated Compose and Caddy assets", () => {
         "--env",
         "DOMAIN=localhost",
         "--env",
-        "APP_PORT=80",
+        "APP_PORT=18080",
         "--volume",
         `${caddyfile}:/etc/caddy/Caddyfile:ro`,
         CADDY_IMAGE,
@@ -106,15 +116,15 @@ integrationDescribe("generated Compose and Caddy assets", () => {
         "--name",
         caddyName,
         "--network",
-        TEST_NETWORK,
+        "host",
         "--env",
         "DOMAIN=localhost",
         "--env",
-        "APP_PORT=80",
+        "APP_PORT=18080",
+        "--env",
+        `CADDY_HTTPS_PORT=${caddyHttpsPort}`,
         "--volume",
         `${caddyfile}:/etc/caddy/Caddyfile:ro`,
-        "--publish",
-        "127.0.0.1::443",
         CADDY_IMAGE,
         "caddy",
         "run",
@@ -124,16 +134,12 @@ integrationDescribe("generated Compose and Caddy assets", () => {
         "caddyfile",
       ]);
 
-      const publishedPort = await dockerText(["port", caddyName, "443/tcp"]);
-      const port = publishedPort.split(":").at(-1);
-      if (port === undefined) throw new Error("Caddy did not publish HTTPS.");
-
-      await expect(waitForCaddy(Number(port))).resolves.toContain(
-        "Welcome to nginx!",
+      await expect(waitForCaddy(caddyHttpsPort)).resolves.toContain(
+        "Simploy ingress works",
       );
       const compose = await readFile(composeFile, "utf8");
       expect(renderedCompose).toContain(TEST_NETWORK);
-      expect(compose).not.toContain("ports:");
+      expect(compose).toContain("127.0.0.1:$" + "{APP_PORT}:$" + "{APP_PORT}");
     } finally {
       await dockerQuietly(["rm", "--force", caddyName]);
       await dockerQuietly(
@@ -144,6 +150,7 @@ integrationDescribe("generated Compose and Caddy assets", () => {
         },
       );
       await dockerQuietly(["network", "rm", TEST_NETWORK]);
+      await dockerQuietly(["image", "rm", applicationImage]);
       await rm(root, { recursive: true, force: true });
     }
   }, 120_000);

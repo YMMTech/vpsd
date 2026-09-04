@@ -52,6 +52,8 @@ describe("VPS setup script", () => {
     expect(script).toContain("docker network inspect simploy-ingress");
     expect(script).toContain("docker network create simploy-ingress");
     expect(script).toContain("install -d -m 0700");
+    expect(script).toContain("/etc/sudoers.d/simploy-caddy");
+    expect(script).toContain("NOPASSWD: /usr/bin/install -D -m 0644");
     expect(script).not.toContain("ssh-keygen");
     expect(script).not.toContain("StrictHostKeyChecking=no");
     expect(script).not.toContain("ufw disable");

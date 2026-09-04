@@ -18,9 +18,10 @@ service integration material.
 - Next.js output includes a fixed `app/Dockerfile` and standalone output
   configuration for the generated CI and Compose contract.
 - External services: Supabase for Next.js projects. It creates a connection
-  contract and application-owned starter migration in `services/supabase/`,
-  installs the official client packages, and adds browser/server/auth/storage
-  helpers in the generated application.
+  contract in `services/supabase/`, a Supabase CLI-style application migration
+  in `supabase/migrations/`, installs the official client packages, and adds
+  browser/server/admin/auth/storage/session helpers in the generated
+  application.
 
 The generated CI workflow builds and pushes the application image to its
 provider registry, resolves an immutable image digest, and deploys using the

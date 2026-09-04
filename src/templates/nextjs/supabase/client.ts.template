@@ -1,16 +1,21 @@
 import { createBrowserClient } from "@supabase/ssr";
 
-function requiredPublicEnvironment(name: string): string {
-  const value = process.env[name];
+function requiredPublicEnvironment(value: string | undefined, name: string): string {
   if (value === undefined || value.length === 0) {
-    throw new Error(`${name} must be configured at runtime.`);
+    throw new Error(`${name} must be configured at build time.`);
   }
   return value;
 }
 
 export function createSupabaseBrowserClient() {
   return createBrowserClient(
-    requiredPublicEnvironment("NEXT_PUBLIC_SUPABASE_URL"),
-    requiredPublicEnvironment("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"),
+    requiredPublicEnvironment(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      "NEXT_PUBLIC_SUPABASE_URL",
+    ),
+    requiredPublicEnvironment(
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+      "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+    ),
   );
 }
