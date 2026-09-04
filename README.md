@@ -55,9 +55,12 @@ Simploy release you trust, review it, then run it as root:
 sudo DEPLOY_USER=simploy bash setup-vps.sh
 ```
 
-The script is safe to rerun: it reuses existing Docker/Caddy installations,
-the deployment account, `authorized_keys`, and `simploy-ingress` rather than
-resetting them.
+The script is safe to rerun: it reuses an operational Docker Engine and
+Compose v2 installation (including Ubuntu's `docker.io` +
+`docker-compose-v2` pair), the deployment account, `authorized_keys`, and
+`simploy-ingress` rather than resetting them. It installs Docker's official
+packages only when Docker is missing; it does not migrate a compatible
+installation just to change package source.
 
 ### Run through the installed CLI
 
@@ -66,13 +69,26 @@ not duplicate the setup logic in TypeScript.
 
 ```bash
 pnpm add -g simploy
-sudo DEPLOY_USER=simploy simploy setup
+DEPLOY_USER=simploy simploy setup
+```
+
+When invoked by a normal user, the CLI uses `sudo` to run the bundled script's
+installed package path. `sudo simploy setup` is not required. If the Caddy
+configuration path is needed, pass it in the same way:
+
+```bash
+DEPLOY_USER=simploy SIMPLOY_CADDY_CONFIG_PATH=/your/caddy/configuration/Caddyfile simploy setup
 ```
 
 ### Manual equivalent
 
-Run these commands as an operator on the Debian/Ubuntu VPS. They use Docker's
-official APT repository and Caddy's official package distribution.
+Run these commands as an operator on the Debian/Ubuntu VPS. If `docker
+--version`, `docker compose version`, and `systemctl is-active docker` already
+succeed, retain that compatible Docker installation and skip the Docker CE
+installation commands below. In particular, do not install Docker's
+`docker-compose-plugin` alongside Ubuntu's `docker-compose-v2`. For a host
+without Docker, the following uses Docker's official APT repository and
+Caddy's official package distribution.
 
 ```bash
 export DEPLOY_USER=simploy

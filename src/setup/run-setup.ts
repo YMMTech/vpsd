@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 export interface SetupScriptInvocation {
@@ -9,6 +9,11 @@ export interface SetupScriptInvocation {
 export type SetupScriptRunner = (
   invocation: SetupScriptInvocation,
 ) => Promise<void>;
+
+export interface SetupPrivilegeChecker {
+  readonly isRoot: () => boolean;
+  readonly findSudo: () => string | undefined;
+}
 
 export class SetupScriptError extends Error {
   public constructor(message: string) {
@@ -21,23 +26,57 @@ export function getBundledSetupScriptPath(): string {
   return fileURLToPath(new URL("./setup-vps.sh", import.meta.url));
 }
 
-export function createSetupScriptInvocation(): SetupScriptInvocation {
+export function createSetupScriptInvocation(
+  scriptArguments: readonly string[] = [],
+  privileges: SetupPrivilegeChecker = systemPrivileges,
+): SetupScriptInvocation {
+  const scriptPath = getBundledSetupScriptPath();
+  if (privileges.isRoot()) {
+    return {
+      command: "bash",
+      arguments: [scriptPath, ...scriptArguments],
+    };
+  }
+
+  const sudo = privileges.findSudo();
+  if (sudo === undefined) {
+    throw new SetupScriptError(
+      "Root privileges are required for VPS setup. Install sudo or run the bundled setup script as root.",
+    );
+  }
+
   return {
-    command: "bash",
-    arguments: [getBundledSetupScriptPath()],
+    command: sudo,
+    arguments: [
+      "--preserve-env=DEPLOY_USER,SIMPLOY_CADDY_CONFIG_PATH",
+      "bash",
+      scriptPath,
+      ...scriptArguments,
+    ],
   };
 }
 
 export async function runBundledSetupScript(
+  scriptArguments: readonly string[] = [],
   runScript: SetupScriptRunner = runSetupScript,
+  privileges: SetupPrivilegeChecker = systemPrivileges,
 ): Promise<void> {
   try {
-    await runScript(createSetupScriptInvocation());
+    await runScript(createSetupScriptInvocation(scriptArguments, privileges));
   } catch (error) {
     const detail = error instanceof Error ? error.message : "unknown error";
     throw new SetupScriptError(`VPS setup failed: ${detail}`);
   }
 }
+
+const systemPrivileges: SetupPrivilegeChecker = {
+  isRoot: () => process.getuid?.() === 0,
+  findSudo: () => {
+    const result = spawnSync("sudo", ["--version"], { stdio: "ignore" });
+    const error = result.error as NodeJS.ErrnoException | undefined;
+    return error?.code === "ENOENT" ? undefined : "sudo";
+  },
+};
 
 async function runSetupScript(
   invocation: SetupScriptInvocation,

@@ -10,6 +10,107 @@ fail() {
   exit 1
 }
 
+package_is_installed() {
+  dpkg-query --show --showformat='${db:Status-Status}' "$1" 2>/dev/null | grep -qx installed
+}
+
+docker_command_works() {
+  command -v docker >/dev/null 2>&1 && docker --version >/dev/null 2>&1
+}
+
+docker_compose_works() {
+  docker_command_works && docker compose version >/dev/null 2>&1
+}
+
+docker_daemon_is_active() {
+  systemctl is-active --quiet docker
+}
+
+configure_docker_repository() {
+  install -m 0755 -d /etc/apt/keyrings
+  curl -fsSL "https://download.docker.com/linux/${ID}/gpg" \
+    -o /etc/apt/keyrings/docker.asc
+  chmod a+r /etc/apt/keyrings/docker.asc
+  printf '%s\n' \
+    "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/${ID} ${VERSION_CODENAME} stable" \
+    > /etc/apt/sources.list.d/docker.list
+}
+
+install_official_docker() {
+  # A leftover Ubuntu Compose package conflicts with Docker's official plugin.
+  # It is safe to remove here because no functional Docker command exists.
+  if package_is_installed docker-compose-v2; then
+    apt-get remove -y docker-compose-v2
+  fi
+
+  configure_docker_repository
+  apt-get update
+  apt-get install -y \
+    docker-ce \
+    docker-ce-cli \
+    containerd.io \
+    docker-buildx-plugin \
+    docker-compose-plugin
+}
+
+ensure_docker() {
+  if ! docker_command_works; then
+    if package_is_installed docker.io; then
+      # Restore the distribution package rather than replacing an existing
+      # installation merely because its command is currently unavailable.
+      apt-get install -y --reinstall docker.io
+    else
+      install_official_docker
+    fi
+  fi
+
+  systemctl enable --now docker
+
+  if ! docker_daemon_is_active; then
+    fail "Docker did not become active."
+  fi
+}
+
+ensure_docker_compose() {
+  if docker_compose_works; then
+    return
+  fi
+
+  if package_is_installed docker.io; then
+    # Ubuntu's docker-compose-v2 is the matching Compose implementation for
+    # docker.io. Do not add Docker's conflicting compose plugin.
+    apt-get install -y docker-compose-v2
+  else
+    configure_docker_repository
+    apt-get update
+    apt-get install -y docker-compose-plugin
+  fi
+
+  if ! docker_compose_works; then
+    fail "Docker Compose v2 is not functional after installation."
+  fi
+}
+
+configure_caddy_repository() {
+  curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' \
+    | gpg --dearmor --yes -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+  curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' \
+    > /etc/apt/sources.list.d/caddy-stable.list
+}
+
+ensure_caddy() {
+  if ! command -v caddy >/dev/null 2>&1; then
+    configure_caddy_repository
+    apt-get update
+    apt-get install -y caddy
+  fi
+  systemctl enable --now caddy
+}
+
+if [ "$#" -ne 0 ]; then
+  fail "this script does not accept positional arguments."
+fi
+
 if [ "${EUID}" -ne 0 ]; then
   fail "run this script as root (for example, with sudo)."
 fi
@@ -46,30 +147,9 @@ apt-get install -y \
   apt-transport-https \
   openssh-server
 
-install -m 0755 -d /etc/apt/keyrings
-curl -fsSL "https://download.docker.com/linux/${ID}/gpg" \
-  -o /etc/apt/keyrings/docker.asc
-chmod a+r /etc/apt/keyrings/docker.asc
-printf '%s\n' \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/${ID} ${VERSION_CODENAME} stable" \
-  > /etc/apt/sources.list.d/docker.list
-
-curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' \
-  | gpg --dearmor --yes -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
-curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' \
-  > /etc/apt/sources.list.d/caddy-stable.list
-
-apt-get update
-apt-get install -y \
-  docker-ce \
-  docker-ce-cli \
-  containerd.io \
-  docker-buildx-plugin \
-  docker-compose-plugin \
-  caddy
-
-systemctl enable --now docker
-systemctl enable --now caddy
+ensure_docker
+ensure_docker_compose
+ensure_caddy
 systemctl enable --now ssh
 
 if ! id "${DEPLOY_USER}" >/dev/null 2>&1; then

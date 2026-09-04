@@ -33,7 +33,9 @@ export type SupabaseInitializer = (
   replaceExistingServiceDirectory: boolean,
   replaceExistingMigrationDirectory: boolean,
 ) => Promise<void>;
-export type SetupCommandRunner = () => Promise<void>;
+export type SetupCommandRunner = (
+  arguments_: readonly string[],
+) => Promise<void>;
 
 const writeToStdout: CliWriter = (message) => {
   process.stdout.write(`${message}\n`);
@@ -177,13 +179,8 @@ export async function runCli(
       write(setupHelp);
       return 0;
     }
-    if (options.length > 0) {
-      write("Error: simploy setup does not accept options.");
-      return 1;
-    }
-
     try {
-      await runSetupScript();
+      await runSetupScript(options);
       return 0;
     } catch (error) {
       write(errorMessage(error));

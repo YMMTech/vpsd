@@ -89,6 +89,7 @@ describe("simploy command surface", () => {
   it("runs setup through its bundled-script wrapper and propagates failure", async () => {
     const output: string[] = [];
     let invoked = false;
+    let argumentsReceived: readonly string[] | undefined;
 
     const successExitCode = await runCli(
       ["setup"],
@@ -97,8 +98,9 @@ describe("simploy command surface", () => {
       undefined,
       undefined,
       undefined,
-      async () => {
+      async (arguments_) => {
         invoked = true;
+        argumentsReceived = arguments_;
       },
     );
     const failureExitCode = await runCli(
@@ -115,8 +117,28 @@ describe("simploy command surface", () => {
 
     expect(successExitCode).toBe(0);
     expect(invoked).toBe(true);
+    expect(argumentsReceived).toEqual([]);
     expect(failureExitCode).toBe(1);
     expect(output).toEqual(["Error: setup script exited with code 23."]);
+  });
+
+  it("preserves setup arguments for the bundled setup-script wrapper", async () => {
+    let argumentsReceived: readonly string[] | undefined;
+
+    const exitCode = await runCli(
+      ["setup", "--script-argument"],
+      () => undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      async (arguments_) => {
+        argumentsReceived = arguments_;
+      },
+    );
+
+    expect(exitCode).toBe(0);
+    expect(argumentsReceived).toEqual(["--script-argument"]);
   });
 
   it("collects all six choices interactively", async () => {
