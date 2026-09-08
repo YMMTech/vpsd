@@ -19,6 +19,16 @@ test "$(command -v vpsd)" = "$smoke_root/bin/vpsd"
 vpsd --help
 vpsd setup --help
 installed="$(pnpm root --global --config.global-dir="$smoke_root/global")/vpsd"
+node --input-type=module - "$source_root/package.json" "$installed/package.json" <<'NODE'
+import { readFileSync } from 'node:fs';
+import assert from 'node:assert/strict';
+const [source, installed] = process.argv.slice(2).map(path => JSON.parse(readFileSync(path, 'utf8')));
+for (const key of ['name', 'version', 'license', 'author', 'repository', 'homepage', 'bugs', 'bin']) {
+  assert.deepEqual(installed[key], source[key], `Packed metadata differs: ${key}`);
+}
+console.log(`Verified installed artifact: ${installed.name}@${installed.version}, ${installed.license}, ${installed.author}`);
+NODE
+cmp "$source_root/LICENSE" "$installed/LICENSE"
 test -f "$installed/dist/setup/setup-vps.sh"
 cmp "$source_root/src/setup/setup-vps.sh" "$installed/dist/setup/setup-vps.sh"
 while IFS= read -r -d '' template_file; do

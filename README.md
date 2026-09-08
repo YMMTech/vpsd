@@ -320,3 +320,9 @@ Those defaults do not replace operator responsibilities. VPS provisioning,
 network setup, Caddy operation, Docker access policy, SSH policy, operating
 system hardening, backups, and runtime-secret handling remain the operator's
 responsibility.
+
+## License and releases
+
+MIT licensed. Copyright (c) 2026 Youness Mondir. Author: Youness Mondir. `YMMTech` is the GitHub account namespace only. See [LICENSE](LICENSE).
+
+Canonical repository: [YMMTech/vpsd](https://github.com/YMMTech/vpsd). See [CHANGELOG.md](CHANGELOG.md), [VPSD v0.1.0 release notes](RELEASE_NOTES.md), and the [versioning, immutable-tag policy, and release procedure](docs/release-preparation.md#versioning-and-tag-policy). `package.json` is the authoritative version source. Release preparation does not publish the package or create a release.

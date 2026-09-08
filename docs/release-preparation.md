@@ -1,6 +1,6 @@
-# VPSD 0.1.0 private release preparation
+# VPSD v0.1.0 release preparation
 
-VPSD means **VPS Deployment**. The intended repository is `vpsd`, npm package is `vpsd`, and executable is `vpsd`. Version `0.1.0` is the intended first public version; this is currently a private, unpublished candidate. v0 is feature-frozen: one application, one VPS, generated GitHub or GitLab CI, and optional Next.js/Supabase integration.
+VPSD means **VPS Deployment**. The canonical GitHub repository is `YMMTech/vpsd`, npm package is `vpsd`, and executable is `vpsd`. Version `0.1.0` is the intended first public version; this is currently a private, unpublished candidate. v0 is feature-frozen: one application, one VPS, generated GitHub or GitLab CI, and optional Next.js/Supabase integration.
 
 ## Deployment names and migration
 
@@ -38,104 +38,168 @@ The live deployment path was validated **twice**. Issue 21's corrected deploymen
 
 ## Repository and package contents
 
-`dist/` is generated and ignored by Git. It is required in the npm archive, so `prepack` rebuilds it and copies every runtime template and the setup script before packing. Do not commit `dist/`. The package `files` allowlist includes compiled runtime files, the installation/release-preparation guides, and release notes; npm also includes package metadata, README, and a license when present.
+`dist/` is generated and ignored by Git. It is required in the npm archive, so `prepack` rebuilds it and copies every runtime template and the setup script before packing. Do not commit `dist/`. The package `files` allowlist includes compiled runtime files, the installation/release-preparation guides, release notes, changelog, and MIT license; npm also includes package metadata and README.
 
 `tmp/`, `artifacts/`, tarballs, logs, local environment files, editor settings, `.agents/`, and `.codex/` are ignored. They are not release source. Existing useful issue/specification history is preserved. Empty local scratch directories do not need deletion to remove them from the tracked tree. Ignore rules do not remove secrets from existing Git history; review all history before the later public migration.
 
-## Metadata decisions and remaining publication inputs
+## Release identity and repository metadata
 
-- Name/bin: `vpsd`; version: `0.1.0`; Node.js: `>=22`; development package manager: pnpm `10.30.3`.
-- Description and keywords describe the implemented deployment initializer/setup scope.
-- `publishConfig.access` is `public`, prepared but unused. There is no automated publishing workflow.
-- License and public author/maintainer identity require an explicit owner decision. Until confirmed, metadata is `UNLICENSED` and no author is invented. Do not publish in that state.
-- The final GitHub owner is not specified and the repository does not exist yet. `repository`, `homepage`, and `bugs` are deliberately omitted, rather than pointing to invented public URLs. Fill them only after the destination exists in the later authorized migration.
-- Package-name availability and a final basic name/trademark conflict review must be repeated immediately before publication. No availability guarantee is made by this candidate.
+`package.json` is the authoritative version source: `0.1.0` (no `v` prefix). Product: VPSD — VPS Deployment. npm package and CLI: `vpsd`. Author and copyright holder: **Youness Mondir**. License: **MIT**, with `Copyright (c) 2026 Youness Mondir` in `LICENSE`. `YMMTech` is only the GitHub account namespace, not a separate legal entity or copyright holder.
 
-## Future GitHub migration
+- Repository: `git+https://github.com/YMMTech/vpsd.git`.
+- Homepage: <https://github.com/YMMTech/vpsd#readme>.
+- Issue tracker: <https://github.com/YMMTech/vpsd/issues>.
+- Node.js: `>=22`; declared development package manager: pnpm `10.30.3`.
+- Intended annotated tag: `v0.1.0`; GitHub release title: **VPSD v0.1.0**.
+- `publishConfig.access=public` is prepared, not executed. No publishing automation is enabled.
 
-Destination name: `vpsd`; default branch: `main`; description: “VPSD — VPS Deployment: one application, one VPS, deployment through GitHub Actions or GitLab CI.” Suggested topics: `vps`, `deployment`, `docker`, `caddy`, `github-actions`, `gitlab-ci`, `nextjs`.
+GitHub is the canonical release surface; `github` points to `YMMTech/vpsd`. `origin` remains the existing GitLab remote. Keep `main` and release tags synchronized across both without rewriting history; no duplicate GitLab Release object is required. Generated application GitLab CI support is unchanged. Repository description: “VPSD — VPS Deployment: one application, one VPS, deployment through GitHub Actions or GitLab CI.” Suggested topics: `vps`, `deployment`, `docker`, `caddy`, `github-actions`, `gitlab-ci`, `nextjs`. This document does not change remote repository settings.
 
-Preserve Git history. Create the destination only in a separately authorized round, review existing branches/tags and history for credentials/private material, then push the approved branches and tags explicitly. Do not mirror private refs blindly or rewrite useful history. The existing GitLab quality/security CI may remain for the private source. `.github/workflows/ci.yml` prepares equivalent quality gates and local Docker integration on GitHub, without secrets or publishing permissions. Generated application support for both providers remains intact.
+## Versioning and tag policy
 
-Primary documentation uses relative repository links. Future URL fields are isolated to package metadata and the confirmed migration destination. Do not copy private GitLab CI variables, runner configuration, or personal account details into GitHub. Configure any GitHub repository settings separately after authorization.
+VPSD uses Semantic Versioning, `MAJOR.MINOR.PATCH`, with this pre-1.0 policy:
 
-## Verify a candidate locally
+| Version | Meaning |
+| --- | --- |
+| `0.1.0` | First public VPSD v0 release |
+| `0.1.1` | Bug fix, packaging fix, documentation fix, or compatible maintenance release |
+| `0.2.0` | New backward-compatible v0 capability |
+| `1.0.0` | Deliberate declaration that the public API, configuration, and behavior are stable |
 
-From the repository root, using the declared pnpm version:
+Do not hide incompatible changes in a patch release; document and review compatibility before choosing a release version. No release branches or duplicate version constants/files are required. Read the package version from `package.json`; changelog headings and release notes are intentional records for specific releases.
+
+Release tags are **annotated**, in the form `vMAJOR.MINOR.PATCH`, for example `v0.1.0`. Signed tags are optional, not required for this release. The later tag command is:
 
 ```bash
-pnpm install --frozen-lockfile
-pnpm typecheck
-pnpm lint
-pnpm test
-pnpm build
-pnpm test:integration
-pnpm pack --pack-destination artifacts
-tar -tzf artifacts/vpsd-0.1.0.tgz
-bash scripts/smoke-package.sh "$PWD/artifacts/vpsd-0.1.0.tgz"
-sha256sum artifacts/vpsd-0.1.0.tgz
+git tag -a v0.1.0 -m "VPSD v0.1.0"
 ```
 
-The integration test requires local Docker access and image retrieval. It uses disposable local containers, not a VPS. The package smoke script installs the exact archive offline into isolated temporary global directories, checks `type -a vpsd`, runs help and setup help (not setup), initializes both providers, compares installed templates with source and generated output, and checks Issue 21 corrections. It never uses `dist/` directly as the CLI. `--app none` verifies packaging/generation; the existing Next.js and deployment regression tests cover their implemented contracts.
+Do not execute it during preparation. Once published, release tags must never be moved or reused. A correction to `v0.1.0` is a new `v0.1.1` release, not a replacement tag or artifact.
 
-## Later publication steps — not executed in this round
+If available for this repository/account, enable GitHub release immutability **before publication**, in a separately authorized settings change. Create a draft, attach and verify all assets, then publish. GitHub's [immutable release guidance](https://docs.github.com/en/code-security/concepts/supply-chain-security/immutable-releases) explains that publication locks release assets and the associated tag; see [configuration instructions](https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/establish-provenance-and-integrity/prevent-release-changes). No setting is enabled by this task.
 
-These steps require a separate explicit publication decision. The following is a runbook, not authorization to execute it.
+## Local artifact verification
 
-1. Confirm the public license and maintainer identity. Recheck npm `vpsd` name availability and basic name conflicts; resolve any conflict before publication.
-2. Review the entire Git history, refs, tracked files, and packed archive for private information. Confirm destination owner, `vpsd` repository name, and `main` branch. Create/migrate the GitHub repository only when authorized, preserving approved history.
-3. Set real package metadata using the confirmed owner below. `GITHUB_OWNER` is an operator-supplied shell variable, not a placeholder to publish literally:
+The existing `scripts/smoke-package.sh` installs the exact archive offline into an isolated temporary pnpm global directory. It checks binary resolution with `type -a vpsd`, root/setup help, installed package version and metadata against `package.json`, MIT license contents, every runtime template, and fresh init for both CI providers. Generated templates must match source and include the Issue 21 deployment corrections.
 
-   ```bash
-   npm pkg set "repository.type=git" \
-     "repository.url=git+https://github.com/${GITHUB_OWNER}/vpsd.git" \
-     "homepage=https://github.com/${GITHUB_OWNER}/vpsd#readme" \
-     "bugs.url=https://github.com/${GITHUB_OWNER}/vpsd/issues"
-   ```
+The current CLI does not expose a version flag/command; validate version through installed package metadata. Do not add a version constant or a new CLI feature for this release task. The smoke test uses `--app none` to inspect generated assets without downloading a framework; the existing suite covers Next.js integration and deployment shell behavior.
 
-4. Finalize license/author and release notes, commit the reviewed metadata, and run all candidate checks above again. Metadata changes require a new archive and exact-artifact smoke test. Record its checksum and source commit. Confirm the GitHub quality workflow passes on that commit.
-5. Review the npm payload and authentication. The following commands are for the later publication round only:
+The Docker integration test uses local disposable containers and requires Docker access. The two completed live VPS deployments remain valid; no third live VPS deployment is required.
+
+## Final release sequence
+
+This is a procedure for the later authorized release, not permission to publish. Commands run from the repository root. **Steps 15–21 must not run in this preparation task.** Commit/push actions below are also documented only; this task leaves changes for review.
+
+1. Confirm `package.json` version is `0.1.0`:
 
    ```bash
-   npm whoami
-   npm view vpsd name version
-   npm publish artifacts/vpsd-0.1.0.tgz --access public --dry-run
-   npm publish artifacts/vpsd-0.1.0.tgz --access public
+   node -p 'JSON.parse(require("fs").readFileSync("package.json", "utf8")).version'
    ```
 
-   For an unclaimed name, `npm view` may report not found; investigate unexpected existing ownership. Publish the exact reviewed tarball, not an implicitly rebuilt directory. Use the approved npm account and its required authentication/2FA.
+2. Confirm MIT license, copyright year/name, author Youness Mondir, and `YMMTech/vpsd` repository metadata. Confirm the npm account's authority and recheck `vpsd` availability/name conflicts before publication.
+3. Update `CHANGELOG.md`, including `## [0.1.0] - 2026-09-08`, with factual implemented changes and validation evidence.
+4. Finalize `RELEASE_NOTES.md` for **VPSD v0.1.0**. Keep baseline CI evidence distinguished from final release-commit validation.
+5. Run `pnpm install --frozen-lockfile`, then `pnpm test`.
+6. Run `pnpm test:integration` with local Docker access.
+7. Run `pnpm typecheck`.
+8. Run `pnpm lint`.
+9. Run `pnpm build`.
+10. Create and inspect the exact package artifact:
 
-6. Create the future annotated tag `v0.1.0` on that reviewed release commit, push it to the confirmed GitHub remote, and create release title **VPSD 0.1.0 — VPS Deployment** with `RELEASE_NOTES.md` as the body. These commands are also deferred:
+    ```bash
+    pnpm pack --pack-destination artifacts
+    tar -tzf artifacts/vpsd-0.1.0.tgz
+    sha256sum artifacts/vpsd-0.1.0.tgz > artifacts/vpsd-0.1.0.tgz.sha256
+    ```
 
-   ```bash
-   git tag -a v0.1.0 -m "VPSD 0.1.0"
-   git push github main
-   git push github v0.1.0
-   gh release create v0.1.0 --repo "${GITHUB_OWNER}/vpsd" \
-     --verify-tag --title "VPSD 0.1.0 — VPS Deployment" \
-     --notes-file RELEASE_NOTES.md
-   ```
+    `prepack` rebuilds the runtime. Review the archive for required runtime files and license, and absence of tests, scratch files, credentials, or machine state. Preserve this artifact and checksum; do not silently repack after verification.
 
-7. Verify a fresh install of the published `vpsd@0.1.0`, binary resolution, help, and generated assets against the reviewed artifact. Update the publication-specific installation record. No third live VPS deployment is necessary unless a separate runtime change warrants it.
+11. Install/test that exact artifact:
 
-No npm publication, public repository creation, tag, release, migration push, or announcement is authorized by this document alone.
+    ```bash
+    bash scripts/smoke-package.sh "$PWD/artifacts/vpsd-0.1.0.tgz"
+    sha256sum -c artifacts/vpsd-0.1.0.tgz.sha256
+    ```
 
-## Candidate verification results
+12. Commit reviewed release-preparation changes. Record `git rev-parse HEAD` with the checksum outside the archive. Ensure that all artifact inputs match the commit; any package input change requires rebuilding and retesting. Local ignored artifacts are not committed.
+13. Push the release commit to both remotes, after verifying `git remote -v`:
 
-Results for the private Issue 23 preparation are recorded here after execution. Final public URLs, license/maintainer confirmation, hosted GitHub CI execution, and registry verification are separate pending publication inputs as described above.
+    ```bash
+    git push github main
+    git push origin main
+    ```
 
-| Check | Executed result |
-| --- | --- |
-| Toolchain | Node.js 24.14.0; pnpm 10.30.3 on the local Linux environment |
-| Unit/regression suite | 75 passed; the separately gated Docker test is skipped in the regular suite |
-| Typecheck / lint / build | Passed |
-| Existing Docker/Compose/Caddy integration | Passed (1 test), with local Docker socket access; no VPS used |
-| Artifact contents | Compiled CLI, setup script, all template files (including hidden Docker ignore file), metadata and allowed documentation verified |
-| Exact-artifact install | Offline isolated pnpm global installation passed; intended temporary `vpsd` binary resolved |
-| Installed CLI | Root help, setup help, GitHub init, and GitLab init passed |
-| Issue 21 package contract | Installed template bytes matched source; generated CI matched installed templates; correction checks passed |
-| Cleanup/review | No tracked tmp/dist/archive/editor state; removed obsolete empty-directory placeholders; artifact kept ignored under `artifacts/` |
-| Credential-pattern review | No matching file revisions across 26 commits for the reviewed private-key/token patterns; not a comprehensive security audit |
-| Public/hosted operations | None; hosted GitHub CI, final URLs, name recheck, and registry installation remain deferred |
+14. Confirm hosted **VPSD quality** CI is green on that exact SHA, including its package smoke test:
 
-The final artifact checksum is recorded in Issue 23 rather than inside the archive itself. The candidate is not publication-authorized; unresolved owner metadata must be finalized and the artifact rebuilt/reverified before any public release.
+    ```bash
+    gh run list --repo YMMTech/vpsd --commit "$(git rev-parse HEAD)"       --json headSha,status,conclusion,url,workflowName
+    ```
+
+    Require a completed successful run for the exact commit. A successful earlier baseline is insufficient. Review draft-release settings and enable immutability, if available and authorized, before proceeding. Check that `v0.1.0` does not already exist on either remote. Do not overwrite an existing tag.
+
+15. **Later authorization required:** create the annotated tag on the reviewed release commit:
+
+    ```bash
+    git tag -a v0.1.0 -m "VPSD v0.1.0"
+    git rev-parse 'v0.1.0^{commit}'
+    ```
+
+16. Push the release tag to both remotes. The full synchronization commands are:
+
+    ```bash
+    git push github main
+    git push github v0.1.0
+    git push origin main
+    git push origin v0.1.0
+    ```
+
+17. Create the GitHub Release as a **draft**, never immediately published:
+
+    ```bash
+    gh release create v0.1.0 --repo YMMTech/vpsd --verify-tag --draft       --title "VPSD v0.1.0" --notes-file RELEASE_NOTES.md
+    ```
+
+18. Attach the exact tested artifact and checksum, then verify them:
+
+    ```bash
+    gh release upload v0.1.0 artifacts/vpsd-0.1.0.tgz       artifacts/vpsd-0.1.0.tgz.sha256 --repo YMMTech/vpsd
+    VPSD_RELEASE_REVIEW_DIR="$(mktemp -d)"
+    gh release download v0.1.0 --repo YMMTech/vpsd       --pattern 'vpsd-0.1.0.tgz*' --dir "$VPSD_RELEASE_REVIEW_DIR"
+    cmp artifacts/vpsd-0.1.0.tgz "$VPSD_RELEASE_REVIEW_DIR/vpsd-0.1.0.tgz"
+    cmp artifacts/vpsd-0.1.0.tgz.sha256 "$VPSD_RELEASE_REVIEW_DIR/vpsd-0.1.0.tgz.sha256"
+    gh release view v0.1.0 --repo YMMTech/vpsd
+    git ls-remote github 'refs/tags/v0.1.0*'
+    git ls-remote origin 'refs/tags/v0.1.0*'
+    ```
+
+    Review title, release notes, assets, local checksum, and the peeled annotated tag commit on both remotes. It must equal the reviewed release SHA with green CI. Do not substitute GitHub's automatically generated source archive for the tested npm tarball.
+
+19. Publish the reviewed GitHub draft:
+
+    ```bash
+    gh release edit v0.1.0 --repo YMMTech/vpsd --draft=false
+    ```
+
+20. Publish the exact tested package to npm, using the authorized account and required authentication/2FA:
+
+    ```bash
+    npm whoami
+    npm publish artifacts/vpsd-0.1.0.tgz --access public --dry-run
+    sha256sum -c artifacts/vpsd-0.1.0.tgz.sha256
+    npm publish artifacts/vpsd-0.1.0.tgz --access public
+    ```
+
+21. Verify a fresh isolated registry installation of `vpsd@0.1.0`: binary resolution, help, installed version/license/metadata, and initialization with both providers. Compare generated templates to the reviewed artifact and record the registry integrity/version. This check is deferred until npm publication.
+22. Never move or reuse `v0.1.0`. Any release correction becomes `0.1.1` with a new annotated tag `v0.1.1` and a separately tested artifact.
+
+No tag, GitHub Release (including draft), npm publication, or public announcement is created by this preparation task. GitHub is the canonical release surface; a duplicate GitLab Release object is unnecessary.
+
+## Validation record
+
+- Local release gates: 75 unit/regression tests, the separate Docker/Compose/Caddy integration test, typecheck, lint, build, and installed-artifact smoke are re-run for this preparation. Results are recorded in the accompanying completion report.
+- The two successful live VPS deployments include HTTP 200 through Caddy. No third deployment is required or performed.
+- Hosted GitHub CI: **VPSD quality** completed successfully on the already pushed candidate baseline `55fc4fabf87b810c61d6a489b42478e17de7d1b6`, verified through GitHub's API: [run 34210000936](https://github.com/YMMTech/vpsd/actions/runs/34210000936).
+- The new release-preparation changes are not committed or pushed by this task. Hosted CI on their exact final SHA remains a mandatory pre-tag gate. Do not claim the baseline run validates this new worktree.
+- Current license, author, and repository URLs are finalized. Remaining publication-time checks: final commit/CI identity, npm name/account permissions, repository immutability availability/configuration, tag absence/synchronization, draft assets/checksum, and registry installation after authorized publication.
+
+Artifact checksum and base commit are recorded in an ignored local release validation file under `artifacts/`, outside the tarball, to avoid self-referential checksums. This file is evidence, not a second authoritative version source.

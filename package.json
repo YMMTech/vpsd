@@ -1,13 +1,15 @@
 {
   "name": "vpsd",
   "version": "0.1.0",
-  "description": "VPSD \u2014 VPS Deployment: initialize one containerized application and prepare one VPS for CI-driven deployment.",
+  "description": "VPSD — VPS Deployment: initialize one containerized application and prepare one VPS for CI-driven deployment.",
   "type": "module",
   "files": [
     "dist",
     "docs/installation.md",
     "docs/release-preparation.md",
-    "RELEASE_NOTES.md"
+    "RELEASE_NOTES.md",
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "bin": {
     "vpsd": "./dist/cli/index.js"
@@ -33,7 +35,7 @@
     "typescript": "5.9.3",
     "vitest": "4.0.16"
   },
-  "license": "UNLICENSED",
+  "license": "MIT",
   "keywords": [
     "vps",
     "deployment",
@@ -46,5 +48,14 @@
   ],
   "publishConfig": {
     "access": "public"
+  },
+  "author": "Youness Mondir",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/YMMTech/vpsd.git"
+  },
+  "homepage": "https://github.com/YMMTech/vpsd#readme",
+  "bugs": {
+    "url": "https://github.com/YMMTech/vpsd/issues"
   }
 }

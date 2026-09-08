@@ -2,7 +2,7 @@
 
 ## Status
 
-Private preparation implemented; package validation complete. License/maintainer confirmation and future public destination metadata remain pending. No public operations performed.
+Private preparation implemented; package validation complete. Follow-up release preparation confirms MIT, Youness Mondir, and YMMTech/vpsd metadata; final release-commit hosted CI and publication-time checks remain pending. No public operations performed.
 
 ## Context
 
@@ -211,8 +211,8 @@ The package must contain the compiled CLI and all runtime templates/assets requi
 
 ### Acceptance criteria
 
-- [ ] Public package metadata points to the final GitHub repository.
-- [ ] License metadata matches the repository license.
+- [x] Public package metadata points to the final GitHub repository.
+- [x] License metadata matches the repository license.
 - [x] The package contains every runtime file required by the CLI.
 - [x] No source-only development artifacts or secrets are accidentally published.
 - [x] `bin` installs the expected CLI executable.
@@ -399,7 +399,7 @@ The private release candidate is `vpsd@0.1.0`, with CLI `vpsd` and future reposi
 - Future GitHub quality CI and an exact-artifact smoke script are prepared without publication permissions. Existing GitLab source CI and both generated deployment providers remain supported.
 - Local tests (75), typecheck, lint, build, and the existing Docker integration test (1) passed. The exact local archive installed offline into temporary pnpm global directories; binary resolution, help, setup help, and fresh init for both providers passed. No third live VPS deployment was performed.
 
-Remaining items are explicit: owner confirmation of license and public maintainer identity (currently `UNLICENSED`, no fabricated author); real GitHub repository/homepage/bugs URLs after an authorized destination exists; hosted GitHub CI execution after migration; final name/conflict check and registry installation at publication. The GitHub repository-name and final-public-URL criteria are deferred by the pre-publication boundary, not represented as completed public actions.
+License/author/repository metadata are now confirmed: MIT, Youness Mondir, and `YMMTech/vpsd`. The pushed baseline has green hosted GitHub CI; new release-preparation changes still require hosted CI on their final committed SHA before tagging. Final name/account checks, immutable release settings, and registry verification remain publication-time tasks.
 
 No npm publication, public repository creation, migration push, public tag, release, or announcement occurred.
 
@@ -414,5 +414,5 @@ The maintainer requested the remaining filenames and variables be renamed as wel
 - Source/runtime and both generated CI providers use only the new contract. Existing installations require the documented coordinated migration; no legacy aliases or automatic host migration were added.
 - Revalidation: lint, 75 regular tests, typecheck, build, existing local Docker integration (1 test), exact-artifact install, help, and both init providers passed.
 - Artifact: `artifacts/vpsd-0.1.0.tgz`.
-- SHA256: `5f864f7de6827be56f9c4b363e4a1e6d968fdd5af632ac371a5d39c1fe55ceff`.
+- Historical rename-round SHA256 (superseded by the MIT/metadata artifact): `5f864f7de6827be56f9c4b363e4a1e6d968fdd5af632ac371a5d39c1fe55ceff`.
 - No publication, push, tag, or live VPS migration/deployment performed.
