@@ -20,7 +20,7 @@ quality:
     - pnpm test
     - pnpm build
     - pnpm pack --pack-destination artifacts
-    - bash scripts/smoke-package.sh "$PWD/artifacts/vpsd-0.1.0.tgz"
+    - bash scripts/smoke-package.sh "$PWD/artifacts/younmon-vpsd-0.1.1.tgz"
 integration:
   stage: test
   image: node:22-alpine

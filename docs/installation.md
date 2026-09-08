@@ -1,6 +1,6 @@
 # Install VPSD and deploy with GitLab
 
-This guide takes one Next.js application from a fresh project directory to HTTPS on a Debian or Ubuntu VM. For the future public release, install the published `vpsd` package from the registry. This document accompanies a private pre-publication candidate; registry availability is not asserted yet. The optional [Run locally](#run-locally) section is for contributors testing source builds.
+This guide takes one Next.js application from a fresh project directory to HTTPS on a Debian or Ubuntu VM. For the corrective npm release, install `@younmon/vpsd` from the registry. The immutable GitHub v0.1.0 release remains valid, but npm rejected its unscoped package name before publication. Version 0.1.1 will be the first npm-published VPSD version; this guide prepares that release and does not assert registry availability yet. The optional [Run locally](#run-locally) section is for contributors testing source builds.
 
 Commands are labeled by where they run. Use a Bash-compatible terminal on your local computer. VPSD prepares the VM and generates project files; the generated GitLab pipeline performs deployments afterward.
 
@@ -50,7 +50,7 @@ VPSD uses the renamed deployment contract described in [release preparation](rel
 **Local computer:**
 
 ```bash
-pnpm add -g vpsd
+pnpm add -g @younmon/vpsd
 vpsd --help
 ssh -p 22 YOUR_ADMIN_USER@YOUR_VM_IP
 ```
@@ -60,7 +60,7 @@ Verify the VM's host fingerprint using your VM provider's console before accepti
 **VM admin session:**
 
 ```bash
-pnpm add -g vpsd
+pnpm add -g @younmon/vpsd
 vpsd setup
 ```
 
@@ -342,7 +342,7 @@ pnpm build
 pnpm pack
 ```
 
-`pnpm pack` runs the `prepack` build hook; the explicit build above also allows checking compilation before packaging. Use the actual packed filename printed by `pnpm pack`; the example below uses version `0.1.0`.
+`pnpm pack` runs the `prepack` build hook; the explicit build above also allows checking compilation before packaging. Use the actual packed filename printed by `pnpm pack`; the example below uses version `0.1.1`.
 
 A manual test found that a rebuilt tarball contained the new template while the global installation still had the old one. A unique tarball filename resolved it. Reuse of the same local dependency path was a suspected caching cause; pnpm's internal cause was not established.
 
@@ -350,14 +350,14 @@ A manual test found that a rebuilt tarball contained the new template while the 
 
 ```bash
 VPSD_LOCAL_PACKAGE="vpsd-local-$(date +%Y%m%d%H%M%S).tgz"
-cp vpsd-0.1.0.tgz "$VPSD_LOCAL_PACKAGE"
-pnpm remove -g vpsd
+cp younmon-vpsd-0.1.1.tgz "$VPSD_LOCAL_PACKAGE"
+pnpm remove -g @younmon/vpsd
 pnpm add -g "./$VPSD_LOCAL_PACKAGE"
 type -a vpsd
 pnpm bin -g
 pnpm root -g
 tar -xOf "$VPSD_LOCAL_PACKAGE" package/dist/templates/gitlab-ci.yml | head -20
-head -20 "$(pnpm root -g)/vpsd/dist/templates/gitlab-ci.yml"
+head -20 "$(pnpm root -g)/@younmon/vpsd/dist/templates/gitlab-ci.yml"
 ```
 
 Both templates should contain `cd app`, followed by the corrected verification commands in step 3. Multiple executable locations from `type -a` may indicate a different installation takes precedence. Rebuilding/repacking does not update installed copies or existing generated projects.

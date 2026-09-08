@@ -1,15 +1,23 @@
-# VPSD v0.1.0
+# VPSD v0.1.1
 
-Prepared release notes — not yet published.
+Prepared corrective release notes — not yet published.
 
-VPSD (VPS Deployment) prepares **one containerized application on one VPS**. `vpsd init` generates the application and deployment assets for either **GitHub Actions or GitLab CI**, and `vpsd setup` prepares OpenSSH, Docker Engine, Docker Compose, and persistent Caddy on supported Debian/Ubuntu hosts.
+This is a **packaging/distribution correction**, not a feature release. VPSD v0.1.0 was the first GitHub release; it remains valid and immutable. npm rejected the unscoped name `vpsd` as too similar to existing package names before publication, so version 0.1.0 was never published to npm.
 
-CI builds and pushes the application image, deploys its immutable digest with Docker Compose, and validates/reloads host Caddy for ingress and HTTPS. Next.js is the reference application; optional Supabase integration connects to an external instance.
+Version 0.1.1 changes the npm package to **`@younmon/vpsd`** and is intended to be the first npm-published VPSD version. After publication, install it with:
 
-Security properties include strict SSH host-key verification, scoped sudo for Caddy operations, a non-root Next.js application container, and loopback-only application port binding. Credentials remain separate from committed deployment settings.
+```bash
+npm install -g @younmon/vpsd
+```
 
-Validation: 75 unit/regression tests and the Docker/Compose/Caddy integration test passed; the exact packed artifact installs and initializes both providers with the Issue 21 corrections. The full deployment path has passed twice, including HTTP 200 through Caddy. [Hosted GitHub CI passed](https://github.com/YMMTech/vpsd/actions/runs/34210000936) on candidate baseline `55fc4fabf87b810c61d6a489b42478e17de7d1b6`; the final release-preparation commit must also pass before tagging.
+The command remains:
 
-v0 does not implement automatic health checks, automatic rollback, multi-VPS orchestration, or a daemon. Supabase hosting, cloud provisioning, DNS/firewall policy, and general OS hardening remain operator responsibilities. The `none` application target requires user-supplied code and a Dockerfile.
+```bash
+vpsd
+```
 
-Package/CLI: `vpsd`; package version: `0.1.0`; intended annotated tag: `v0.1.0`. MIT licensed, copyright © 2026 Youness Mondir. Repository: [YMMTech/vpsd](https://github.com/YMMTech/vpsd). See the [changelog](CHANGELOG.md), [installation guide](docs/installation.md), and [release procedure](docs/release-preparation.md).
+The product remains VPSD (VPS Deployment), repository [YMMTech/vpsd](https://github.com/YMMTech/vpsd), author Youness Mondir, and license MIT. No deployment architecture or runtime behavior changed. One-application/one-VPS scope, both GitHub and GitLab deployment providers, Docker Compose, Caddy, and the existing security properties remain unchanged. No health checks, rollback, or orchestration features were added.
+
+The corrective candidate is validated with the 75-test suite, local Docker/Compose/Caddy integration, typecheck, lint, build, and isolated installation of the exact scoped tarball, including both init providers and Issue 21 corrections. Hosted CI on the final corrective commit remains a pre-tag gate after commit/push. Prior successful live VPS deployments remain valid; no third deployment is required.
+
+The v0.1.0 tag, GitHub Release, and assets must not be modified or reused. The new intended tag/title are `v0.1.1` / **VPSD v0.1.1**. See the [changelog](CHANGELOG.md) and [release procedure](docs/release-preparation.md).

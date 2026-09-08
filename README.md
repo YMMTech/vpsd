@@ -17,7 +17,14 @@ Actions workflow or GitLab CI/CD pipeline performs deployment.
 
 ## Release status and v0 boundary
 
-This is a private pre-publication release candidate for `vpsd@0.1.0`; registry commands describe the intended future published installation. Nothing has been published by this preparation round.
+VPSD v0.1.0 is the first published GitHub release and remains immutable. npm rejected the unscoped `vpsd` name as too similar to existing names, so npm publication of 0.1.0 did not occur. This corrective candidate is `@younmon/vpsd@0.1.1`, intended to be the first npm-published VPSD version. The product, repository, and `vpsd` command are unchanged.
+
+After the corrective package is published, install it with:
+
+```bash
+npm install -g @younmon/vpsd
+vpsd --help
+```
 
 The deployment path was validated end to end twice. Issue 21 records the corrected deployment returning HTTP 200 through Caddy; Issue 22 records the later installation/deployment round. Final registry installation verification is a separate publication-stage check, not a missing live deployment test.
 
@@ -82,7 +89,7 @@ installation just to change package source.
 not duplicate the setup logic in TypeScript.
 
 ```bash
-pnpm add -g vpsd
+pnpm add -g @younmon/vpsd
 DEPLOY_USER=vpsd vpsd setup
 ```
 
@@ -325,4 +332,4 @@ responsibility.
 
 MIT licensed. Copyright (c) 2026 Youness Mondir. Author: Youness Mondir. `YMMTech` is the GitHub account namespace only. See [LICENSE](LICENSE).
 
-Canonical repository: [YMMTech/vpsd](https://github.com/YMMTech/vpsd). See [CHANGELOG.md](CHANGELOG.md), [VPSD v0.1.0 release notes](RELEASE_NOTES.md), and the [versioning, immutable-tag policy, and release procedure](docs/release-preparation.md#versioning-and-tag-policy). `package.json` is the authoritative version source. Release preparation does not publish the package or create a release.
+Canonical repository: [YMMTech/vpsd](https://github.com/YMMTech/vpsd). See [CHANGELOG.md](CHANGELOG.md), [VPSD v0.1.1 release notes](RELEASE_NOTES.md), and the [versioning, immutable-tag policy, and release procedure](docs/release-preparation.md#versioning-and-tag-policy). `package.json` is the authoritative version source. Release preparation does not publish the package or create a release.

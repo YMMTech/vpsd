@@ -21,4 +21,4 @@ jobs:
       - run: pnpm build
       - run: pnpm test:integration
       - run: pnpm pack --pack-destination artifacts
-      - run: bash scripts/smoke-package.sh "$PWD/artifacts/vpsd-0.1.0.tgz"
+      - run: bash scripts/smoke-package.sh "$PWD/artifacts/younmon-vpsd-0.1.1.tgz"

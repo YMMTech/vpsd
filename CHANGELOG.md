@@ -1,6 +1,18 @@
 # Changelog
 
-Release versions follow the [versioning and tag policy](docs/release-preparation.md#versioning-and-tag-policy). `package.json` is the authoritative package version. Entries describe implemented changes; this release is prepared but not yet published.
+Release versions follow the [versioning and tag policy](docs/release-preparation.md#versioning-and-tag-policy). `package.json` is the authoritative package version. Entries describe implemented changes; v0.1.0 is published on GitHub, while v0.1.1 is prepared but not yet published.
+
+## [0.1.1] - 2026-09-08
+
+### Changed
+
+- Changed npm distribution identity from the unavailable unscoped `vpsd` name to `@younmon/vpsd`; npm rejected `vpsd` as too similar to existing package names before publication.
+- Updated installation instructions and package-artifact validation for the scoped package. The installed command remains `vpsd`; the product remains VPSD and repository remains `YMMTech/vpsd`.
+- Packaging/distribution correction only: no deployment architecture or runtime behavior changed.
+
+### Release history
+
+VPSD v0.1.0 was the first GitHub release and remains valid and immutable. No npm publication of 0.1.0 occurred. Version 0.1.1 is intended to be the first npm-published VPSD version; do not publish `@younmon/vpsd@0.1.0` or replace any v0.1.0 tag/assets.
 
 ## [0.1.0] - 2026-09-08
 

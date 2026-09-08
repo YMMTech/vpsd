@@ -2,7 +2,7 @@
 
 ## Status
 
-Private preparation implemented; package validation complete. Follow-up release preparation confirms MIT, Youness Mondir, and YMMTech/vpsd metadata; final release-commit hosted CI and publication-time checks remain pending. No public operations performed.
+Initial preparation complete; GitHub v0.1.0 is now published and remains immutable. npm rejected the unscoped `vpsd` name before publication, so npm 0.1.0 was not published. The current corrective candidate is `@younmon/vpsd@0.1.1`, intended as the first npm release, with CLI `vpsd` and repository `YMMTech/vpsd` unchanged. The original specification and validation records below preserve the historical unscoped proposal; this follow-up supersedes that npm identity without changing the published release.
 
 ## Context
 
@@ -416,3 +416,11 @@ The maintainer requested the remaining filenames and variables be renamed as wel
 - Artifact: `artifacts/vpsd-0.1.0.tgz`.
 - Historical rename-round SHA256 (superseded by the MIT/metadata artifact): `5f864f7de6827be56f9c4b363e4a1e6d968fdd5af632ac371a5d39c1fe55ceff`.
 - No publication, push, tag, or live VPS migration/deployment performed.
+
+## Scoped-package correction: v0.1.1
+
+The corrective package identity is `@younmon/vpsd@0.1.1`; product VPSD, executable `vpsd`, author Youness Mondir, MIT license, and repository `YMMTech/vpsd` remain unchanged. Current installation uses `npm install -g @younmon/vpsd`. The new archive is `artifacts/younmon-vpsd-0.1.1.tgz` and is built and validated separately from the historical 0.1.0 archive.
+
+No deployment runtime or architecture change is included. The published v0.1.0 GitHub release and tag are immutable and must not be modified or reused. The later release procedure uses annotated tag `v0.1.1`, GitHub draft `VPSD v0.1.1`, the exact validated scoped artifact, and `npm publish ./artifacts/younmon-vpsd-0.1.1.tgz --access=public`. Publication is not part of this task. Hosted CI must pass on the exact corrective commit after it is committed/pushed.
+
+Corrective candidate validation passed: 75 tests, 1 Docker/Compose/Caddy integration test, typecheck, lint, build, and isolated installation of the scoped artifact with both CI providers and Issue 21 corrections. Artifact SHA256: `a716fc5bc7751acedc2d9dfa3c7e095cb6d2b287a32aaceffc0204c757b7a083`. The existing local v0.1.0 tag and archive were checked unchanged; no remote release operations occurred.

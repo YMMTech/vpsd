@@ -2,7 +2,7 @@
 # Install and inspect an exact local package archive; never publish or deploy.
 set -euo pipefail
 if [ "$#" -ne 1 ]; then
-  echo 'Usage: bash scripts/smoke-package.sh /absolute/path/to/vpsd-VERSION.tgz' >&2
+  echo 'Usage: bash scripts/smoke-package.sh /absolute/path/to/younmon-vpsd-VERSION.tgz' >&2
   exit 2
 fi
 artifact=$(realpath "$1")
@@ -18,7 +18,8 @@ type -a vpsd
 test "$(command -v vpsd)" = "$smoke_root/bin/vpsd"
 vpsd --help
 vpsd setup --help
-installed="$(pnpm root --global --config.global-dir="$smoke_root/global")/vpsd"
+package_name=$(node -p 'JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")).name' "$source_root/package.json")
+installed="$(pnpm root --global --config.global-dir="$smoke_root/global")/$package_name"
 node --input-type=module - "$source_root/package.json" "$installed/package.json" <<'NODE'
 import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';

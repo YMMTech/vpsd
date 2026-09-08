@@ -1,6 +1,6 @@
 {
-  "name": "vpsd",
-  "version": "0.1.0",
+  "name": "@younmon/vpsd",
+  "version": "0.1.1",
   "description": "VPSD — VPS Deployment: initialize one containerized application and prepare one VPS for CI-driven deployment.",
   "type": "module",
   "files": [
