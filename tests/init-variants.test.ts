@@ -29,7 +29,7 @@ afterEach(async () => {
 });
 
 async function makeRoot(): Promise<string> {
-  const root = await mkdtemp(join(tmpdir(), "simploy-variant-"));
+  const root = await mkdtemp(join(tmpdir(), "vpsd-variant-"));
   roots.push(root);
   return root;
 }
@@ -81,7 +81,7 @@ describe("representative initialized project variants", () => {
     expect(exitCode).toBe(0);
     await expect(stat(join(root, "app"))).resolves.toBeDefined();
     await expect(
-      readFile(join(root, "simploy", "deploy.env"), "utf8"),
+      readFile(join(root, "vpsd", "deploy.env"), "utf8"),
     ).resolves.toBe("DOMAIN=variant.example.com\nAPP_PORT=4321\n");
 
     await expect(
@@ -89,7 +89,7 @@ describe("representative initialized project variants", () => {
         join(
           root,
           ci === "github"
-            ? ".github/workflows/simploy-deploy.yml"
+            ? ".github/workflows/vpsd-deploy.yml"
             : ".gitlab-ci.yml",
         ),
       ),

@@ -11,9 +11,9 @@ services:
     ports:
       - "127.0.0.1:${APP_PORT}:${APP_PORT}"
     networks:
-      - simploy-ingress
+      - vpsd-ingress
 
 networks:
-  simploy-ingress:
+  vpsd-ingress:
     external: true
-    name: ${SIMPLOY_INGRESS_NETWORK:-simploy-ingress}
+    name: ${VPSD_INGRESS_NETWORK:-vpsd-ingress}

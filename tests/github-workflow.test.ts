@@ -20,7 +20,7 @@ afterEach(async () => {
 });
 
 async function makeRoot(): Promise<string> {
-  const root = await mkdtemp(join(tmpdir(), "simploy-github-workflow-"));
+  const root = await mkdtemp(join(tmpdir(), "vpsd-github-workflow-"));
   roots.push(root);
   return root;
 }
@@ -35,7 +35,7 @@ describe("GitHub Actions workflow", () => {
     expect(workflow).toContain(
       "actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
     );
-    expect(workflow).toContain("concurrency:\n  group: simploy-production");
+    expect(workflow).toContain("concurrency:\n  group: vpsd-production");
     expect(workflow).toContain(
       `VPS_HOST: ${githubExpression} secrets.VPS_HOST }}`,
     );
@@ -54,10 +54,10 @@ describe("GitHub Actions workflow", () => {
     );
     expect(workflow).toContain(`VPS_PORT="\${VPS_PORT:-22}"`);
     expect(workflow).toContain(
-      `SIMPLOY_DEPLOY_PATH="\${SIMPLOY_DEPLOY_PATH:-/home/simploy/app}"`,
+      `VPSD_DEPLOY_PATH="\${VPSD_DEPLOY_PATH:-/home/vpsd/app}"`,
     );
     expect(workflow).toContain(
-      `SIMPLOY_CADDY_CONFIG_PATH="\${SIMPLOY_CADDY_CONFIG_PATH:-/etc/caddy/Caddyfile}"`,
+      `VPSD_CADDY_CONFIG_PATH="\${VPSD_CADDY_CONFIG_PATH:-/etc/caddy/Caddyfile}"`,
     );
     expect(workflow).toContain('ssh -p "$VPS_PORT"');
     expect(workflow).toContain("docker build --pull");
@@ -71,15 +71,15 @@ describe("GitHub Actions workflow", () => {
       `IMAGE_REF=ghcr.io/${shellExpression}GITHUB_REPOSITORY,,}@$DIGEST`,
     );
     expect(workflow).toContain(
-      "tar -C simploy -cf - deploy.env compose.yml Caddyfile",
+      "tar -C vpsd -cf - deploy.env compose.yml Caddyfile",
     );
-    expect(workflow).toContain("vars.SIMPLOY_DEPLOY_PATH");
-    expect(workflow).toContain("vars.SIMPLOY_CADDY_CONFIG_PATH");
-    expect(workflow).toContain("SIMPLOY_DEPLOY_PATH_B64");
-    expect(workflow).toContain("SIMPLOY_CADDY_CONFIG_PATH_B64");
-    expect(workflow).toContain("sh -c 'SIMPLOY_DEPLOY_PATH=");
+    expect(workflow).toContain("vars.VPSD_DEPLOY_PATH");
+    expect(workflow).toContain("vars.VPSD_CADDY_CONFIG_PATH");
+    expect(workflow).toContain("VPSD_DEPLOY_PATH_B64");
+    expect(workflow).toContain("VPSD_CADDY_CONFIG_PATH_B64");
+    expect(workflow).toContain("sh -c 'VPSD_DEPLOY_PATH=");
     expect(workflow).not.toContain(
-      'tar -C simploy -cf - deploy.env compose.yml Caddyfile | ssh -p "$VPS_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" "SIMPLOY_DEPLOY_PATH_B64=$DEPLOY_PATH_B64 sh -s" <<',
+      'tar -C vpsd -cf - deploy.env compose.yml Caddyfile | ssh -p "$VPS_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" "VPSD_DEPLOY_PATH_B64=$DEPLOY_PATH_B64 sh -s" <<',
     );
     expect(workflow).toContain("NEXT_PUBLIC_SUPABASE_URL");
     expect(workflow).toContain("SUPABASE_SERVICE_ROLE_KEY");
@@ -103,18 +103,18 @@ describe("GitHub Actions workflow", () => {
     expect(workflow).not.toMatch(
       /(?:-----BEGIN [A-Z ]+PRIVATE KEY-----|gh[pous]_|glpat-|ssh-(?:rsa|ed25519) )/,
     );
-    expect(workflow).not.toContain("pnpm simploy");
-    expect(workflow).not.toContain("npx simploy");
+    expect(workflow).not.toContain("pnpm vpsd");
+    expect(workflow).not.toContain("npx vpsd");
     expect(workflow).not.toMatch(
-      /\bsimploy(?:d| (?:daemon|server|gateway|deploy|validate|run))\b/i,
+      /\bvpsd(?:d| (?:daemon|server|gateway|deploy|validate|run))\b/i,
     );
     expect(workflow).not.toContain("supabase self-hosted");
     expect(workflow).not.toContain("DOCKER_HOST");
     expect(workflow).not.toContain("self-hosted");
     expect(workflow).not.toContain("latest");
     expect(workflow).not.toContain("set -x");
-    expect(workflow).not.toContain("~/simploy");
-    expect(workflow).not.toContain("/opt/simploy");
+    expect(workflow).not.toContain("~/vpsd");
+    expect(workflow).not.toContain("/opt/vpsd");
     expect(workflow).not.toContain("/etc/caddy/sites/");
   });
 
@@ -124,7 +124,7 @@ describe("GitHub Actions workflow", () => {
     await writeGitHubWorkflow(root, false);
 
     expect(await readdir(join(root, ".github", "workflows"))).toEqual([
-      "simploy-deploy.yml",
+      "vpsd-deploy.yml",
     ]);
     const template = await readFile(getGitHubWorkflowTemplatePath(), "utf8");
     await expect(

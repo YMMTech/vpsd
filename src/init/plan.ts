@@ -19,7 +19,7 @@ export function createInitPlan(
   input: InitInput,
   root = process.cwd(),
 ): InitPlan {
-  const managedPaths = ["app", "simploy"];
+  const managedPaths = ["app", "vpsd"];
 
   if (input.services.length > 0) {
     managedPaths.push("services");
@@ -57,7 +57,7 @@ export async function confirmPlanConflicts(
 ): Promise<boolean> {
   if (plan.conflicts.length === 0) return true;
 
-  report(`Existing Simploy-managed targets: ${plan.conflicts.join(", ")}`);
+  report(`Existing VPSD-managed targets: ${plan.conflicts.join(", ")}`);
   const confirmed = await prompter.confirm("Replace all listed targets?");
   return confirmed === true;
 }

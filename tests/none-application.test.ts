@@ -29,7 +29,7 @@ afterEach(async () => {
 });
 
 async function makeRoot(): Promise<string> {
-  const root = await mkdtemp(join(tmpdir(), "simploy-none-app-"));
+  const root = await mkdtemp(join(tmpdir(), "vpsd-none-app-"));
   roots.push(root);
   return root;
 }
@@ -46,7 +46,7 @@ describe("none application initializer", () => {
   });
 
   it.each([
-    ["github", ".github/workflows/simploy-deploy.yml", ".gitlab-ci.yml"],
+    ["github", ".github/workflows/vpsd-deploy.yml", ".gitlab-ci.yml"],
     ["gitlab", ".gitlab-ci.yml", ".github"],
   ])("creates the none application with only the selected %s CI output", async (ci, selectedPath, absentPath) => {
     const root = await makeRoot();
@@ -75,13 +75,11 @@ describe("none application initializer", () => {
 
     expect(exitCode).toBe(0);
     expect(await readdir(join(root, "app"))).toEqual([]);
-    await expect(
-      stat(join(root, "simploy", "deploy.env")),
-    ).resolves.toBeDefined();
+    await expect(stat(join(root, "vpsd", "deploy.env"))).resolves.toBeDefined();
     await expect(stat(join(root, selectedPath))).resolves.toBeDefined();
     await expect(stat(join(root, absentPath))).rejects.toThrow();
     expect(output).toHaveLength(1);
-    expect(output[0]).toContain("Simploy project initialized.");
+    expect(output[0]).toContain("VPSD project initialized.");
   });
 
   it("rejects services that do not have a none-application integration", async () => {
@@ -114,6 +112,6 @@ describe("none application initializer", () => {
       "Error: The none application does not support selected services in v0.",
     ]);
     await expect(stat(join(root, "app"))).rejects.toThrow();
-    await expect(stat(join(root, "simploy"))).rejects.toThrow();
+    await expect(stat(join(root, "vpsd"))).rejects.toThrow();
   });
 });

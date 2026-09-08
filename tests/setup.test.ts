@@ -75,7 +75,7 @@ describe("VPS setup script", () => {
     expect(invocation).toEqual({
       command: "/usr/bin/sudo",
       arguments: [
-        "--preserve-env=DEPLOY_USER,SIMPLOY_DEPLOY_PATH,SIMPLOY_CADDY_CONFIG_PATH",
+        "--preserve-env=DEPLOY_USER,VPSD_DEPLOY_PATH,VPSD_CADDY_CONFIG_PATH",
         "bash",
         getBundledSetupScriptPath(),
         "--script-argument",
@@ -113,15 +113,15 @@ describe("VPS setup script", () => {
     expect(script).toContain("dl.cloudsmith.io/public/caddy/stable");
     expect(script).toContain("systemctl enable --now docker");
     expect(script).toContain("systemctl enable --now caddy");
-    expect(script).toContain("docker network inspect simploy-ingress");
-    expect(script).toContain("docker network create simploy-ingress");
+    expect(script).toContain("docker network inspect vpsd-ingress");
+    expect(script).toContain("docker network create vpsd-ingress");
     expect(script).toContain("install -d -m 0700");
-    expect(script).toContain("/etc/sudoers.d/simploy-caddy");
+    expect(script).toContain("/etc/sudoers.d/vpsd-caddy");
     expect(script).toContain(
-      `SIMPLOY_DEPLOY_PATH="\${SIMPLOY_DEPLOY_PATH:-/home/simploy/app}"`,
+      `VPSD_DEPLOY_PATH="\${VPSD_DEPLOY_PATH:-/home/vpsd/app}"`,
     );
     expect(script).toContain(
-      `SIMPLOY_CADDY_CONFIG_PATH="\${SIMPLOY_CADDY_CONFIG_PATH:-/etc/caddy/Caddyfile}"`,
+      `VPSD_CADDY_CONFIG_PATH="\${VPSD_CADDY_CONFIG_PATH:-/etc/caddy/Caddyfile}"`,
     );
     expect(script).toContain("NOPASSWD: /usr/bin/install -D -m 0644");
     expect(script).not.toContain("ssh-keygen");

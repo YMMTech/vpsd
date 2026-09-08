@@ -40,10 +40,10 @@ class ScriptedPrompter implements InitPrompter {
 }
 
 async function makeRoot(): Promise<string> {
-  return mkdtemp(join(tmpdir(), "simploy-cli-"));
+  return mkdtemp(join(tmpdir(), "vpsd-cli-"));
 }
 
-describe("simploy command surface", () => {
+describe("vpsd command surface", () => {
   it("lists init in the root help output", async () => {
     const output: string[] = [];
     const exitCode = await runCli(["--help"], (message) =>
@@ -62,7 +62,7 @@ describe("simploy command surface", () => {
     );
 
     expect(exitCode).toBe(0);
-    expect(output.join("\n")).toContain("Usage: simploy init");
+    expect(output.join("\n")).toContain("Usage: vpsd init");
   });
 
   it("exposes help for setup without running the script", async () => {
@@ -82,7 +82,7 @@ describe("simploy command surface", () => {
     );
 
     expect(exitCode).toBe(0);
-    expect(output.join("\n")).toContain("Usage: simploy setup");
+    expect(output.join("\n")).toContain("Usage: vpsd setup");
     expect(invoked).toBe(false);
   });
 
@@ -165,7 +165,7 @@ describe("simploy command surface", () => {
       expect(exitCode).toBe(0);
       expect(prompter.messages).toHaveLength(6);
       expect(output).toHaveLength(1);
-      expect(output[0]).toContain("Simploy project initialized.");
+      expect(output[0]).toContain("VPSD project initialized.");
     } finally {
       await rm(root, { recursive: true, force: true });
     }
@@ -338,13 +338,13 @@ describe("simploy command surface", () => {
 
       expect(exitCode).toBe(1);
       expect(output).toEqual([
-        "Existing Simploy-managed targets: app",
+        "Existing VPSD-managed targets: app",
         "Initialization aborted; no project files were created.",
       ]);
       await expect(
         readFile(join(root, "app", "existing.txt"), "utf8"),
       ).resolves.toBe("keep me");
-      await expect(stat(join(root, "simploy"))).rejects.toThrow();
+      await expect(stat(join(root, "vpsd"))).rejects.toThrow();
     } finally {
       await rm(root, { recursive: true, force: true });
     }
@@ -403,7 +403,7 @@ describe("simploy command surface", () => {
         "Error: Initialization input collection was cancelled.",
       ]);
       await expect(stat(join(root, "app"))).rejects.toThrow();
-      await expect(stat(join(root, "simploy"))).rejects.toThrow();
+      await expect(stat(join(root, "vpsd"))).rejects.toThrow();
     } finally {
       await rm(root, { recursive: true, force: true });
     }

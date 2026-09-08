@@ -2,7 +2,7 @@
 
 ## Status
 
-Open.
+Complete. Corrections and regression coverage are implemented. The first real end-to-end deployment returned HTTP 200 through Caddy; the complete path was subsequently validated a second time.
 
 ## Context
 
@@ -45,11 +45,11 @@ SIMPLOY_CADDY_CONFIG_PATH=/etc/caddy/Caddyfile
 
 ### Acceptance criteria
 
-- [ ] `simploy setup` with no path environment variables configures the default Caddy path.
-- [ ] Generated CI deploys to `/home/simploy/app` by default.
-- [ ] Generated CI uses `/etc/caddy/Caddyfile` by default.
-- [ ] Both defaults are overridable.
-- [ ] Setup, CI, docs and tests use the same defaults.
+- [x] `simploy setup` with no path environment variables configures the default Caddy path.
+- [x] Generated CI deploys to `/home/simploy/app` by default.
+- [x] Generated CI uses `/etc/caddy/Caddyfile` by default.
+- [x] Both defaults are overridable.
+- [x] Setup, CI, docs and tests use the same defaults.
 
 ---
 
@@ -96,13 +96,13 @@ Requirements:
 
 ### Acceptance criteria
 
-- [ ] GitLab CI resolves pnpm from `app/package.json`.
-- [ ] GitHub Actions does the equivalent.
-- [ ] No pnpm version is hardcoded by Simploy.
-- [ ] Missing `test` does not fail verification.
-- [ ] Missing/failing `build` does fail verification.
-- [ ] `--if-present` is not forwarded to `next build`.
-- [ ] Tests cover package-manager version resolution and optional/mandatory scripts.
+- [x] GitLab CI resolves pnpm from `app/package.json`.
+- [x] GitHub Actions does the equivalent.
+- [x] No pnpm version is hardcoded by Simploy.
+- [x] Missing `test` does not fail verification.
+- [x] Missing/failing `build` does fail verification.
+- [x] `--if-present` is not forwarded to `next build`.
+- [x] Tests cover package-manager version resolution and optional/mandatory scripts.
 
 ---
 
@@ -130,12 +130,12 @@ as the effective default.
 
 ### Acceptance criteria
 
-- [ ] Port `22` is used by default.
-- [ ] `VPS_PORT` overrides it everywhere.
-- [ ] GitLab CI supports a non-standard port.
-- [ ] GitHub Actions supports a non-standard port.
-- [ ] Documentation covers the variable and default.
-- [ ] Tests cover both default and overridden ports.
+- [x] Port `22` is used by default.
+- [x] `VPS_PORT` overrides it everywhere.
+- [x] GitLab CI supports a non-standard port.
+- [x] GitHub Actions supports a non-standard port.
+- [x] Documentation covers the variable and default.
+- [x] Tests cover both default and overridden ports.
 
 ---
 
@@ -188,11 +188,11 @@ Equivalent implementations are acceptable.
 
 ### Acceptance criteria
 
-- [ ] Deployment assets stream successfully over SSH.
-- [ ] No SSH invocation uses a tar/data pipe and heredoc on the same stdin.
-- [ ] GitLab CI is corrected.
-- [ ] GitHub Actions is checked for the same defect.
-- [ ] Tests cover the generated upload/extraction path.
+- [x] Deployment assets stream successfully over SSH.
+- [x] No SSH invocation uses a tar/data pipe and heredoc on the same stdin.
+- [x] GitLab CI is corrected.
+- [x] GitHub Actions is checked for the same defect.
+- [x] Tests cover the generated upload/extraction path.
 
 ---
 
@@ -227,11 +227,11 @@ Equivalent implementations are acceptable if Compose reliably receives the immut
 
 ### Acceptance criteria
 
-- [ ] `${APP_IMAGE}` resolves during deployment.
-- [ ] The immutable digest-based image is pulled and started.
-- [ ] GitLab CI is corrected.
-- [ ] GitHub Actions is checked for the same defect.
-- [ ] Tests cover Compose image-variable resolution.
+- [x] `${APP_IMAGE}` resolves during deployment.
+- [x] The immutable digest-based image is pulled and started.
+- [x] GitLab CI is corrected.
+- [x] GitHub Actions is checked for the same defect.
+- [x] Tests cover Compose image-variable resolution.
 
 ---
 
@@ -283,10 +283,10 @@ Equivalent implementations are acceptable only if generated CI and generated sud
 
 ### Acceptance criteria
 
-- [ ] `sudo -n` succeeds for Caddy install, validate and reload.
-- [ ] GitLab CI uses the authorized absolute paths.
-- [ ] GitHub Actions is checked for the same mismatch.
-- [ ] Tests prevent CI/sudoers command-path drift.
+- [x] `sudo -n` succeeds for Caddy install, validate and reload.
+- [x] GitLab CI uses the authorized absolute paths.
+- [x] GitHub Actions is checked for the same mismatch.
+- [x] Tests prevent CI/sudoers command-path drift.
 
 ---
 

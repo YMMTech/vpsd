@@ -32,7 +32,7 @@ export async function assertRootGitRepositoryAbsent(
   }
 
   throw new GitRepositoryInitializationError(
-    "An existing Git repository at the project root is not supported by simploy init.",
+    "An existing Git repository at the project root is not supported by vpsd init.",
   );
 }
 

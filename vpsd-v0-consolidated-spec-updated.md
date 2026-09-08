@@ -1,18 +1,26 @@
-# Simploy v0 — Consolidated Architecture and Specification
+# VPSD v0 — Consolidated Architecture and Specification
 
 ## Status
 
-This document is the current consolidated specification for the clean Simploy v0 implementation.
+This document is the current consolidated specification for the clean VPSD v0 implementation.
 
-Simploy v0 is a lightweight project initializer for one containerized web application deployed to one preconfigured VPS.
+VPSD v0 is a lightweight project initializer for one containerized web application deployed to one preconfigured VPS.
 
-Simploy creates the application, deployment assets, selected CI workflow, and optional external-service integrations. After initialization, Simploy is not part of deployment execution. GitHub Actions or GitLab CI/CD performs deployment over SSH using the generated files.
+VPSD creates the application, deployment assets, selected CI workflow, and optional external-service integrations. After initialization, VPSD is not part of deployment execution. GitHub Actions or GitLab CI/CD performs deployment over SSH using the generated files.
 
 ---
 
+## Supported VPS preparation
+
+`vpsd setup` runs the bundled Debian/Ubuntu Bash script on an existing VPS, using sudo when needed. It installs/configures OpenSSH, Docker Engine, Docker Compose v2, persistent system-level Caddy, a deployment account, the ingress network, and narrow Caddy sudo permissions. Compatible Docker installations are reused. Setup does not create cloud instances, configure DNS/firewalls, perform general OS hardening, or deploy the application.
+
+The operator supplies the VM, SSH keys, CI credentials, DNS, firewall policy, and backups. No VPSD daemon runs on the host. CI invokes Docker Compose and Caddy directly after initialization.
+
+Deployment names are `vpsd/`, `vpsd-ingress`, the default `vpsd` account, and `VPSD_*` variables. Existing installations require [coordinated migration](docs/release-preparation.md#deployment-names-and-migration).
+
 ## 1. Goals
 
-Simploy v0 must:
+VPSD v0 must:
 
 - initialize a complete deployable project;
 - support one containerized web application per repository;
@@ -26,7 +34,7 @@ Simploy v0 must:
 - support optional external-service integrations without coupling them to the core deployment contract;
 - provide Next.js as the v0 reference application integration;
 - provide Supabase as the v0 reference external-service integration;
-- remain understandable and operable without Kubernetes, a permanent Simploy service, or a custom deployment engine.
+- remain understandable and operable without Kubernetes, a permanent VPSD service, or a custom deployment engine.
 
 ---
 
@@ -34,8 +42,8 @@ Simploy v0 must:
 
 The following are explicitly outside v0:
 
-- Simploy daemon or agent on the VPS;
-- server-side Simploy deployment engine;
+- VPSD daemon or agent on the VPS;
+- server-side VPSD deployment engine;
 - SSH gateway or forced-command gateway;
 - public deployment API;
 - webhook receiver;
@@ -44,11 +52,9 @@ The following are explicitly outside v0:
 - multi-VPS scheduling;
 - high availability;
 - automatic VPS provisioning;
-- automatic Docker installation;
-- automatic OpenSSH installation;
 - operating-system hardening;
 - multi-application repository support;
-- hosted Simploy control plane;
+- hosted VPSD control plane;
 - arbitrary framework detection;
 - mandatory external secret manager;
 - automatic Supabase deployment or lifecycle management;
@@ -60,7 +66,7 @@ The following are explicitly outside v0:
 
 ```mermaid
 flowchart TD
-    Dev["Developer"] --> Init["simploy init"]
+    Dev["Developer"] --> Init["vpsd init"]
     Init --> Repo["Initialized repository"]
 
     Repo --> CI["GitHub Actions or GitLab CI/CD"]
@@ -70,12 +76,12 @@ flowchart TD
     Registry -->|"Pull immutable image digest"| VPS
 
     Internet["Internet"] -->|"HTTP / HTTPS"| Caddy["Persistent Caddy ingress"]
-    Caddy -->|"simploy-ingress"| App["Application container"]
+    Caddy -->|"127.0.0.1:APP_PORT"| App["Application container"]
 
     App --> Service["Optional external service"]
 ```
 
-The VPS does **not** run Simploy.
+The VPS does **not** run a persistent VPSD service. The operator may invoke `vpsd setup` on it.
 
 After initialization the deployment path is:
 
@@ -99,7 +105,7 @@ The initialized project is separated into three primary areas:
 project/
 ├── .git/
 ├── app/
-├── simploy/
+├── vpsd/
 ├── services/
 ├── .github/
 │   └── workflows/
@@ -120,12 +126,12 @@ For v0:
 
 Framework-specific service helpers belong in `app/`.
 
-### `simploy/`
+### `vpsd/`
 
 Contains deployment assets:
 
 ```text
-simploy/
+vpsd/
 ├── deploy.env
 ├── compose.yml
 └── Caddyfile
@@ -135,7 +141,7 @@ simploy/
 
 Contains optional external-service integration contracts.
 
-Services are connections/integrations, not infrastructure that Simploy owns or deploys.
+Services are connections/integrations, not infrastructure that VPSD owns or deploys.
 
 For Supabase, the user is responsible for deploying and operating Supabase.
 
@@ -150,27 +156,28 @@ CI files remain in the locations required by the provider:
 
 ## 5. CLI
 
-v0 exposes one required Simploy project command:
+v0 exposes the project initializer and the supported VPS preparation command:
 
 ```bash
-pnpm simploy init
+vpsd init
+vpsd setup
 ```
 
 There is no required:
 
 ```text
-simploy generate
-simploy validate
-simploy deploy
+vpsd generate
+vpsd validate
+vpsd deploy
 ```
 
 Deployment is performed by the generated CI workflow.
 
 ---
 
-## 6. `simploy init`
+## 6. `vpsd init`
 
-`simploy init` creates the complete initial project.
+`vpsd init` creates the complete initial project.
 
 ### 6.1 Structural choices
 
@@ -183,7 +190,7 @@ Initialization gathers:
 5. domain;
 6. application port.
 
-All Simploy choices are gathered before Simploy writes project files.
+All VPSD choices are gathered before VPSD writes project files.
 
 ### 6.2 Project name
 
@@ -196,7 +203,7 @@ simplapp
 CLI form:
 
 ```bash
-pnpm simploy init --name my-project
+pnpm vpsd init --name my-project
 ```
 
 ### 6.3 Application
@@ -211,30 +218,30 @@ none
 Examples:
 
 ```bash
-pnpm simploy init --app nextjs
+pnpm vpsd init --app nextjs
 ```
 
 ```bash
-pnpm simploy init --app none
+pnpm vpsd init --app none
 ```
 
 When `nextjs` is selected:
 
-- Simploy invokes the official `create-next-app`;
+- VPSD invokes the official `create-next-app`;
 - normal `create-next-app` prompts remain available;
-- Simploy does not duplicate or rename all framework-specific options.
+- VPSD does not duplicate or rename all framework-specific options.
 
 Shortcut:
 
 ```bash
-pnpm simploy init --app nextjs --app-default
+pnpm vpsd init --app nextjs --app-default
 ```
 
 `--app-default` uses the framework defaults without asking framework-specific questions.
 
 When `none` is selected, `app/` is created empty.
 
-After all selected project files are prepared, Simploy initializes one Git
+After all selected project files are prepared, VPSD initializes one Git
 repository at the project root. The Next.js generator receives `--disable-git`
 so it does not initialize `app/` as a nested repository. Initializing into an
 existing Git repository remains outside v0.
@@ -267,7 +274,7 @@ supabase
 CLI example:
 
 ```bash
-pnpm simploy init --services supabase
+pnpm vpsd init --services supabase
 ```
 
 The CLI may support multiple selected services through the same option.
@@ -283,10 +290,10 @@ app.localhost
 CLI form:
 
 ```bash
-pnpm simploy init --domain example.com
+pnpm vpsd init --domain example.com
 ```
 
-Simploy does not modify `/etc/hosts`.
+VPSD does not modify `/etc/hosts`.
 
 ### 6.7 Application port
 
@@ -299,14 +306,14 @@ Default:
 CLI form:
 
 ```bash
-pnpm simploy init --port 3000
+pnpm vpsd init --port 3000
 ```
 
 ### 6.8 Non-interactive initialization
 
 Supplied CLI options pre-answer their corresponding prompts.
 
-If every required Simploy choice is supplied, no final Simploy confirmation is required.
+If every required VPSD choice is supplied, no final VPSD confirmation is required.
 
 Framework-specific prompts remain controlled by the selected framework unless `--app-default` is used.
 
@@ -314,11 +321,11 @@ Framework-specific prompts remain controlled by the selected framework unless `-
 
 Initialization may run in a non-empty directory.
 
-If a Simploy-managed target that init intends to create already exists:
+If a VPSD-managed target that init intends to create already exists:
 
-- Simploy asks whether to replace it;
+- VPSD asks whether to replace it;
 - declining aborts initialization;
-- a declined/cancelled pre-write initialization must not leave a partial Simploy project.
+- a declined/cancelled pre-write initialization must not leave a partial VPSD project.
 
 ---
 
@@ -326,12 +333,12 @@ If a Simploy-managed target that init intends to create already exists:
 
 There is no custom YAML deployment contract.
 
-The previous `simploy.config.yml` design is removed.
+The previous `vpsd.config.yml` design is removed.
 
 Stable non-secret deployment configuration lives in:
 
 ```text
-simploy/deploy.env
+vpsd/deploy.env
 ```
 
 For the core v0 application contract it contains exactly:
@@ -373,7 +380,7 @@ repository/image@sha256:<digest>
 
 Mutable tags such as `latest` are not sufficient as the release identity.
 
-The image reference is not stored in `simploy/deploy.env`.
+The image reference is not stored in `vpsd/deploy.env`.
 
 ---
 
@@ -392,18 +399,18 @@ The generated workflow is designed to perform:
 7. use/transfer of the committed deployment assets required by the workflow;
 8. Docker Compose deployment operations;
 9. Caddy configuration/update operations;
-10. optional application health checking;
-11. rollback behavior where defined by the generated workflow;
-12. provider-visible job success or failure.
+10. provider-visible job success or failure.
 
-These are properties of the generated CI workflow, not runtime responsibilities of Simploy.
+Application health checks and automatic rollback are not implemented in v0.
+
+These are properties of the generated CI workflow, not runtime responsibilities of VPSD.
 
 Provider-level deployment serialization is authoritative in v0:
 
 - GitHub Actions: production concurrency group;
 - GitLab CI/CD: production `resource_group`.
 
-CI does not install or run Simploy.
+CI does not install or run VPSD.
 
 ---
 
@@ -420,14 +427,14 @@ SSH_KNOWN_HOSTS
 
 Generated CI defaults to SSH port `22`; operators may override it with `VPS_PORT`.
 
-Generated CI and `simploy setup` share these overridable defaults:
+Generated CI and `vpsd setup` share these overridable defaults:
 
 ```text
-SIMPLOY_DEPLOY_PATH=/home/simploy/app
-SIMPLOY_CADDY_CONFIG_PATH=/etc/caddy/Caddyfile
+VPSD_DEPLOY_PATH=/home/vpsd/app
+VPSD_CADDY_CONFIG_PATH=/etc/caddy/Caddyfile
 ```
 
-Simploy:
+VPSD:
 
 - does not ask for these secret values during init;
 - does not store them;
@@ -440,7 +447,7 @@ Simploy:
 
 ## 11. Runtime Application Secrets
 
-Application runtime secrets are separate from `simploy/deploy.env`.
+Application runtime secrets are separate from `vpsd/deploy.env`.
 
 Examples include database credentials, authentication secrets, and external-service keys.
 
@@ -449,12 +456,12 @@ The generated CI workflow is designed to consume protected CI secrets/variables 
 Runtime secrets must not be:
 
 - committed to Git;
-- written into `simploy/deploy.env`;
+- written into `vpsd/deploy.env`;
 - baked into application images;
 - printed into normal CI logs;
 - exposed in browser bundles unless intentionally public configuration.
 
-Simploy itself does not retain runtime secret values.
+VPSD itself does not retain runtime secret values.
 
 ---
 
@@ -471,18 +478,18 @@ The generated application deployment:
 Production ingress network:
 
 ```text
-simploy-ingress
+vpsd-ingress
 ```
 
 Integration-test ingress network:
 
 ```text
-simploy-integration-test-ingress
+vpsd-integration-test-ingress
 ```
 
 The application image is supplied by CI as the immutable release digest.
 
-Compose consumes the stable deployment values from `simploy/deploy.env`.
+Compose consumes the stable deployment values from `vpsd/deploy.env`.
 
 ---
 
@@ -499,7 +506,7 @@ VPS :80 / :443
     ↓
 Caddy
     ↓
-simploy-ingress
+127.0.0.1:APP_PORT (loopback binding)
     ↓
 application container
 ```
@@ -508,32 +515,22 @@ The generated deployment assets are designed so that:
 
 - Caddy owns public ports 80 and 443;
 - the application port remains private;
-- Caddy receives the same `DOMAIN` value defined in `simploy/deploy.env`;
+- Caddy receives the same `DOMAIN` value defined in `vpsd/deploy.env`;
 - application-supplied arbitrary Caddyfile fragments are not accepted;
 - the generated CI workflow can validate and apply the application-specific Caddy configuration;
 - Caddy remains independent of the application's Compose lifecycle.
 
 ---
 
-## 14. Optional Health Check
+## 14. Health checks
 
-Health checking is a capability of the generated CI workflow.
-
-It is optional.
-
-When configured, the generated workflow checks the application health endpoint after deployment and applies its configured CI deployment/rollback behavior.
-
-Simploy does not perform health checks itself.
+Generated v0 workflows do not implement application health checks. Operators verify HTTP/HTTPS responses manually. Caddy configuration validation does not verify application health.
 
 ---
 
 ## 15. Rollback
 
-Rollback is behavior of the generated CI workflow.
-
-Simploy does not execute rollback.
-
-The generated workflow may retain and use the information required to restore the previous application release according to the defined CI deployment logic.
+Automatic rollback is not implemented in v0. Recovery is operator-controlled through the application repository and CI.
 
 ---
 
@@ -547,7 +544,7 @@ The current term is:
 service
 ```
 
-A Simploy service integration represents an external capability the application connects to.
+A VPSD service integration represents an external capability the application connects to.
 
 It may provide:
 
@@ -557,7 +554,7 @@ It may provide:
 - service-specific setup documentation;
 - application-side configuration needed to connect to the service.
 
-It does not imply that Simploy deploys or operates the service.
+It does not imply that VPSD deploys or operates the service.
 
 ---
 
@@ -565,7 +562,7 @@ It does not imply that Simploy deploys or operates the service.
 
 Supabase is the v0 reference service integration.
 
-Simploy does **not**:
+VPSD does **not**:
 
 - install Supabase;
 - copy the Supabase self-hosted Docker stack to the VPS;
@@ -590,7 +587,7 @@ Framework-specific application integration belongs under:
 app/
 ```
 
-For a Next.js application, Simploy adds the appropriate Supabase integration helpers to the generated application.
+For a Next.js application, VPSD adds the appropriate Supabase integration helpers to the generated application.
 
 Real Supabase credentials follow the runtime-secret contract and are not committed.
 
@@ -598,9 +595,9 @@ Real Supabase credentials follow the runtime-secret contract and are not committ
 
 ## 18. Security Boundary
 
-Simploy's security responsibility is limited to the project and configuration it generates.
+VPSD prepares supported VPS prerequisites and generates deployment configuration; broad host hardening remains the operator's responsibility.
 
-Simploy does not secure or harden the VPS and does not enforce controls at deployment runtime.
+VPSD does not secure or harden the VPS and does not enforce controls at deployment runtime.
 
 The generated project should follow these properties:
 
@@ -619,7 +616,7 @@ The protected CI workflow is part of the production trust boundary because it ca
 
 Docker access should be treated as effectively privileged VPS access.
 
-VPS provisioning, SSH policy, Docker daemon exposure, host filesystem permissions, operating-system hardening, and other host-level controls remain operator responsibilities rather than Simploy runtime responsibilities.
+VPS provisioning, SSH policy, Docker daemon exposure, host filesystem permissions, operating-system hardening, and other host-level controls remain operator responsibilities rather than VPSD runtime responsibilities.
 
 ---
 
@@ -627,13 +624,13 @@ VPS provisioning, SSH policy, Docker daemon exposure, host filesystem permission
 
 | Concern | Owner |
 | --- | --- |
-| Project initialization | Simploy |
+| Project initialization | VPSD |
 | Application source | Application repository |
 | Application framework | Selected application integration / user |
-| CI workflow generation | Simploy |
+| CI workflow generation | VPSD |
 | OCI image build | CI |
 | Image identity and registry push | CI + selected provider registry |
-| Stable deployment values (`DOMAIN`, `APP_PORT`) | `simploy/deploy.env` |
+| Stable deployment values (`DOMAIN`, `APP_PORT`) | `vpsd/deploy.env` |
 | Deployment execution | CI |
 | SSH credentials | Operator + CI secret store |
 | File transfer during deployment | CI |
@@ -642,7 +639,7 @@ VPS provisioning, SSH policy, Docker daemon exposure, host filesystem permission
 | Runtime application behavior | Application image |
 | External DB/auth/storage service | User-selected external service |
 | Supabase deployment/operation | User |
-| Supabase application integration | Simploy service integration + application |
+| Supabase application integration | VPSD service integration + application |
 | Runtime application secrets | CI secret store + VPS runtime files |
 | VPS provisioning/hardening | Operator |
 | Backup policy/off-host storage | Operator / external service owner |
@@ -651,7 +648,7 @@ VPS provisioning, SSH policy, Docker daemon exposure, host filesystem permission
 
 ## 20. Tooling
 
-Simploy v0 implementation tooling:
+VPSD v0 implementation tooling:
 
 - Node.js;
 - TypeScript;
@@ -661,11 +658,11 @@ Simploy v0 implementation tooling:
 - Vitest for tests;
 - Node standard file-system APIs;
 - Node child-process APIs for approved external commands where needed;
-- templates bundled with the Simploy package.
+- templates bundled with the VPSD package.
 
 A CLI parser and interactive prompt library may be used to implement the already-defined init behavior.
 
-The previous YAML parser/Zod deployment-config stack is no longer required for `simploy.config.yml`, because that file no longer exists.
+The previous YAML parser/Zod deployment-config stack is no longer required for `vpsd.config.yml`, because that file no longer exists.
 
 Dependencies should only be added when required by implemented behavior.
 
@@ -684,14 +681,14 @@ Ingress:     Caddy
 Target:      One preconfigured VPS
 ```
 
-This demonstrates Simploy without making the core depend on Next.js or Supabase.
+This demonstrates VPSD without making the core depend on Next.js or Supabase.
 
 ---
 
 ## 22. Canonical Workflow
 
 ```text
-pnpm simploy init
+pnpm vpsd init
         ↓
 complete project created
         ↓
@@ -704,7 +701,7 @@ commit / push
 generated CI workflow performs deployment
 ```
 
-Simploy is not involved after initialization.
+VPSD is not involved after initialization.
 
 ---
 

@@ -50,20 +50,20 @@ const writeToStdout: CliWriter = (message) => {
   process.stdout.write(`${message}\n`);
 };
 
-const rootHelp = `Usage: simploy <command>
+const rootHelp = `Usage: vpsd <command>
 
-Simploy v0 command-line interface.
+VPSD v0 command-line interface.
 
 Commands:
   init     Collect project initialization choices
-  setup    Prepare a supported VPS for Simploy deployments
+  setup    Prepare a supported VPS for VPSD deployments
 
 Options:
   -h, --help    Show this help message`;
 
-const initHelp = `Usage: simploy init [options]
+const initHelp = `Usage: vpsd init [options]
 
-Collect Simploy project initialization choices.
+Collect VPSD project initialization choices.
 
 Options:
   --name <name>          Project name
@@ -75,13 +75,13 @@ Options:
   --app-default          Request framework defaults for Next.js
   -h, --help             Show this help message`;
 
-const setupHelp = `Usage: simploy setup
+const setupHelp = `Usage: vpsd setup
 
-Run Simploy's bundled Debian/Ubuntu VPS setup script.
+Run VPSD's bundled Debian/Ubuntu VPS setup script.
 
-The script installs Docker Engine, Docker Compose v2, and Caddy; prepares the
-deployment user; and creates simploy-ingress. Run it with appropriate
-privileges. Configure the deployment user with DEPLOY_USER (default: simploy).
+The script installs OpenSSH, Docker Engine, Docker Compose v2, and Caddy; prepares the
+deployment user; and creates vpsd-ingress. Run it with appropriate
+privileges. Configure the deployment user with DEPLOY_USER (default: vpsd).
 
 Options:
   -h, --help    Show this help message`;
@@ -154,7 +154,7 @@ export async function runCli(
       await writeCoreDeploymentAssets(
         root,
         input,
-        plan.conflicts.includes("simploy"),
+        plan.conflicts.includes("vpsd"),
       );
       if (input.ci === "github") {
         await writeGitHubWorkflow(
@@ -201,11 +201,11 @@ export async function runCli(
   }
 
   write(`Unknown command: ${command}`);
-  write("Run 'simploy --help' to see available commands.");
+  write("Run 'vpsd --help' to see available commands.");
   return 1;
 }
 
-const successMessage = (name: string) => `Simploy project initialized.
+const successMessage = (name: string) => `VPSD project initialized.
 
 Project name: ${name}
 
@@ -251,5 +251,5 @@ function parseInitFlags(arguments_: readonly string[]): InitFlagValues {
 
 function errorMessage(error: unknown): string {
   if (error instanceof Error) return `Error: ${error.message}`;
-  return "Error: Unable to collect Simploy initialization choices.";
+  return "Error: Unable to collect VPSD initialization choices.";
 }

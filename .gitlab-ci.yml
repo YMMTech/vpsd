@@ -12,12 +12,15 @@ quality:
   stage: test
   image: node:22-alpine
   script:
+    - apk add --no-cache bash git
     - corepack enable
     - pnpm install --frozen-lockfile
     - pnpm typecheck
     - pnpm lint
     - pnpm test
     - pnpm build
+    - pnpm pack --pack-destination artifacts
+    - bash scripts/smoke-package.sh "$PWD/artifacts/vpsd-0.1.0.tgz"
 integration:
   stage: test
   image: node:22-alpine

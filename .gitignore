@@ -1,3 +1,17 @@
 node_modules/
 dist/
 coverage/
+
+# Disposable development and package outputs
+tmp/
+artifacts/
+*.tgz
+*.log
+.env
+.env.*
+!.env.example
+.DS_Store
+.vscode/
+.idea/
+.agents/
+.codex/

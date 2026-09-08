@@ -46,7 +46,7 @@ afterEach(async () => {
 });
 
 async function makeRoot(): Promise<string> {
-  const root = await mkdtemp(join(tmpdir(), "simploy-supabase-"));
+  const root = await mkdtemp(join(tmpdir(), "vpsd-supabase-"));
   roots.push(root);
   return root;
 }
@@ -260,14 +260,11 @@ describe("Supabase external-service integration", () => {
       "@supabase/ssr": "installed",
     });
     await expect(
-      stat(join(root, "simploy", "compose.yml")),
+      stat(join(root, "vpsd", "compose.yml")),
     ).resolves.toBeDefined();
-    const compose = await readFile(
-      join(root, "simploy", "compose.yml"),
-      "utf8",
-    );
+    const compose = await readFile(join(root, "vpsd", "compose.yml"), "utf8");
     expect(compose.toLowerCase()).not.toContain("supabase");
     expect(output).toHaveLength(1);
-    expect(output[0]).toContain("Simploy project initialized.");
+    expect(output[0]).toContain("VPSD project initialized.");
   });
 });

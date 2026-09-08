@@ -11,7 +11,7 @@ import { writeCoreDeploymentAssets } from "../src/init/deployment-assets.js";
 import type { InitInput } from "../src/init/input.js";
 
 const execFile = promisify(execFileCallback);
-const TEST_NETWORK = "simploy-integration-test-ingress";
+const TEST_NETWORK = "vpsd-integration-test-ingress";
 const CADDY_IMAGE = "caddy:2.10.2-alpine";
 
 const testInput: InitInput = {
@@ -25,16 +25,16 @@ const testInput: InitInput = {
 };
 
 const integrationDescribe =
-  process.env.SIMPLOY_RUN_INTEGRATION_TESTS === "1" ? describe : describe.skip;
+  process.env.VPSD_RUN_INTEGRATION_TESTS === "1" ? describe : describe.skip;
 
 integrationDescribe("generated Compose and Caddy assets", () => {
   it("validates and routes an isolated test application without exposing its port", async () => {
-    const root = await mkdtemp(join(tmpdir(), "simploy-compose-caddy-"));
-    const projectName = `simployintegration${Date.now()}`;
+    const root = await mkdtemp(join(tmpdir(), "vpsd-compose-caddy-"));
+    const projectName = `vpsdintegration${Date.now()}`;
     const caddyName = `${projectName}caddy`;
     const applicationImage = `${projectName}-app`;
     const caddyHttpsPort = 18443;
-    const deployDirectory = join(root, "simploy");
+    const deployDirectory = join(root, "vpsd");
     const composeFile = join(deployDirectory, "compose.yml");
     const caddyfile = join(deployDirectory, "Caddyfile");
     const composeArguments = [
@@ -49,7 +49,7 @@ integrationDescribe("generated Compose and Caddy assets", () => {
     const composeEnvironment = {
       ...process.env,
       APP_IMAGE: applicationImage,
-      SIMPLOY_INGRESS_NETWORK: TEST_NETWORK,
+      VPSD_INGRESS_NETWORK: TEST_NETWORK,
     };
 
     try {
@@ -60,7 +60,7 @@ integrationDescribe("generated Compose and Caddy assets", () => {
       );
       await writeFile(
         join(root, "default.conf"),
-        "server { listen 18080; location / { return 200 'Simploy ingress works'; } }\n",
+        "server { listen 18080; location / { return 200 'VPSD ingress works'; } }\n",
       );
       await docker(["build", "--tag", applicationImage, root]);
       await docker(["network", "create", TEST_NETWORK]);
@@ -135,7 +135,7 @@ integrationDescribe("generated Compose and Caddy assets", () => {
       ]);
 
       await expect(waitForCaddy(caddyHttpsPort)).resolves.toContain(
-        "Simploy ingress works",
+        "VPSD ingress works",
       );
       const compose = await readFile(composeFile, "utf8");
       expect(renderedCompose).toContain(TEST_NETWORK);

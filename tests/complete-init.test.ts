@@ -38,7 +38,7 @@ afterEach(async () => {
 });
 
 async function makeRoot(): Promise<string> {
-  const root = await mkdtemp(join(tmpdir(), "simploy-complete-init-"));
+  const root = await mkdtemp(join(tmpdir(), "vpsd-complete-init-"));
   roots.push(root);
   return root;
 }
@@ -65,7 +65,7 @@ function initArguments(
   ];
 }
 
-describe("complete simploy init workflow", () => {
+describe("complete vpsd init workflow", () => {
   it("creates the complete none/GitHub project in one command", async () => {
     const root = await makeRoot();
     const output: string[] = [];
@@ -81,10 +81,10 @@ describe("complete simploy init workflow", () => {
     expect(exitCode).toBe(0);
     expect(await readdir(join(root, "app"))).toEqual([]);
     await expect(
-      readFile(join(root, "simploy", "deploy.env"), "utf8"),
+      readFile(join(root, "vpsd", "deploy.env"), "utf8"),
     ).resolves.toBe("DOMAIN=example.com\nAPP_PORT=4321\n");
     await expect(
-      stat(join(root, ".github", "workflows", "simploy-deploy.yml")),
+      stat(join(root, ".github", "workflows", "vpsd-deploy.yml")),
     ).resolves.toBeDefined();
     await expect(stat(join(root, ".gitlab-ci.yml"))).rejects.toThrow();
     await expect(stat(join(root, "services"))).rejects.toThrow();
@@ -126,7 +126,7 @@ describe("complete simploy init workflow", () => {
       stat(join(root, "app", "lib", "supabase", "client.ts")),
     ).resolves.toBeDefined();
     const gitignore = await readFile(join(root, ".gitignore"), "utf8");
-    expect(gitignore).toContain("!simploy/deploy.env");
+    expect(gitignore).toContain("!vpsd/deploy.env");
     expect(gitignore).not.toContain("*.env");
   });
 });

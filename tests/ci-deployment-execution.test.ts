@@ -26,7 +26,7 @@ afterEach(async () => {
 });
 
 async function makeRoot(): Promise<string> {
-  const root = await mkdtemp(join(tmpdir(), "simploy-ci-deployment-"));
+  const root = await mkdtemp(join(tmpdir(), "vpsd-ci-deployment-"));
   roots.push(root);
   return root;
 }
@@ -35,7 +35,7 @@ function transferCommand(template: string): string {
   const command = template
     .split("\n")
     .find((line) =>
-      line.includes("tar -C simploy -cf - deploy.env compose.yml Caddyfile"),
+      line.includes("tar -C vpsd -cf - deploy.env compose.yml Caddyfile"),
     );
 
   if (command === undefined)
@@ -49,27 +49,27 @@ async function executeTransfer(
 ): Promise<{ readonly arguments: string; readonly archive: string }> {
   const root = await makeRoot();
   const bin = join(root, "bin");
-  const simploy = join(root, "simploy");
+  const vpsd = join(root, "vpsd");
   const archive = join(root, "archive.tar");
   const argumentsFile = join(root, "ssh-arguments");
   const fakeSsh = join(bin, "ssh");
 
   await mkdir(bin);
-  await mkdir(simploy);
-  await writeFile(join(simploy, "deploy.env"), "DOMAIN=example.test\n");
-  await writeFile(join(simploy, "compose.yml"), "services: {}\n");
-  await writeFile(join(simploy, "Caddyfile"), "example.test\n");
+  await mkdir(vpsd);
+  await writeFile(join(vpsd, "deploy.env"), "DOMAIN=example.test\n");
+  await writeFile(join(vpsd, "compose.yml"), "services: {}\n");
+  await writeFile(join(vpsd, "Caddyfile"), "example.test\n");
   await writeFile(
     fakeSsh,
-    '#!/bin/sh\nprintf \'%s\\n\' "$@" > "$SIMPLOY_SSH_ARGUMENTS"\ncat > "$SIMPLOY_SSH_ARCHIVE"\n',
+    '#!/bin/sh\nprintf \'%s\\n\' "$@" > "$VPSD_SSH_ARGUMENTS"\ncat > "$VPSD_SSH_ARCHIVE"\n',
   );
   await chmod(fakeSsh, 0o755);
 
   const script = [
     "set -euo pipefail",
     `VPS_PORT="\${VPS_PORT:-22}"`,
-    `SIMPLOY_DEPLOY_PATH="\${SIMPLOY_DEPLOY_PATH:-/home/simploy/app}"`,
-    "DEPLOY_PATH_B64=\"$(printf '%s' \"$SIMPLOY_DEPLOY_PATH\" | base64 | tr -d '\\n')\"",
+    `VPSD_DEPLOY_PATH="\${VPSD_DEPLOY_PATH:-/home/vpsd/app}"`,
+    "DEPLOY_PATH_B64=\"$(printf '%s' \"$VPSD_DEPLOY_PATH\" | base64 | tr -d '\\n')\"",
     transferCommand(template),
   ].join("\n");
 
@@ -78,12 +78,12 @@ async function executeTransfer(
     env: {
       ...process.env,
       PATH: `${bin}:${process.env.PATH ?? ""}`,
-      SIMPLOY_DEPLOY_PATH: overrides.deployPath ?? "",
-      SIMPLOY_SSH_ARCHIVE: archive,
-      SIMPLOY_SSH_ARGUMENTS: argumentsFile,
+      VPSD_DEPLOY_PATH: overrides.deployPath ?? "",
+      VPSD_SSH_ARCHIVE: archive,
+      VPSD_SSH_ARGUMENTS: argumentsFile,
       VPS_HOST: "vps.example.test",
       VPS_PORT: overrides.port ?? "",
-      VPS_USER: "simploy",
+      VPS_USER: "vpsd",
     },
   });
 
@@ -100,7 +100,7 @@ describe("generated CI deployment shell behavior", () => {
   ])("%s streams only the tar archive to SSH and applies default or overridden values", async (_provider, render) => {
     const template = await render();
     const defaults = await executeTransfer(template);
-    const customPath = "/srv/simploy/project";
+    const customPath = "/srv/vpsd/project";
     const overrides = await executeTransfer(template, {
       deployPath: customPath,
       port: "22022",
@@ -111,10 +111,10 @@ describe("generated CI deployment shell behavior", () => {
     ).resolves.toMatchObject({
       stdout: expect.stringContaining("deploy.env"),
     });
-    const defaultPath = Buffer.from("/home/simploy/app").toString("base64");
+    const defaultPath = Buffer.from("/home/vpsd/app").toString("base64");
     expect(defaults.arguments).toContain("-p\n22\n");
     expect(defaults.arguments).toContain(defaultPath);
-    expect(defaults.arguments).toContain('tar -C "$SIMPLOY_DEPLOY_PATH" -xf -');
+    expect(defaults.arguments).toContain('tar -C "$VPSD_DEPLOY_PATH" -xf -');
     expect(defaults.arguments).not.toContain("sh -s");
 
     expect(overrides.arguments).toContain("-p\n22022\n");

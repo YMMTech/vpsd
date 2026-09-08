@@ -37,7 +37,7 @@ afterEach(async () => {
 });
 
 async function makeRoot(): Promise<string> {
-  const root = await mkdtemp(join(tmpdir(), "simploy-root-git-"));
+  const root = await mkdtemp(join(tmpdir(), "vpsd-root-git-"));
   roots.push(root);
   return root;
 }
@@ -90,7 +90,7 @@ describe("root Git repository initialization", () => {
       cwd: root,
     });
     expect(stdout).toContain("?? .github/");
-    expect(stdout).toContain("?? simploy/");
+    expect(stdout).toContain("?? vpsd/");
   });
 
   it("creates one root repository containing a Next.js app, GitLab CI, and Supabase", async () => {
@@ -133,7 +133,7 @@ describe("root Git repository initialization", () => {
     expect(stdout).toContain("?? .gitlab-ci.yml");
     expect(stdout).toContain("?? app/");
     expect(stdout).toContain("?? services/");
-    expect(stdout).toContain("?? simploy/");
+    expect(stdout).toContain("?? vpsd/");
   });
 
   it("rejects existing root repositories before creating project output", async () => {
@@ -150,12 +150,12 @@ describe("root Git repository initialization", () => {
 
     expect(exitCode).toBe(1);
     expect(output).toEqual([
-      "Error: An existing Git repository at the project root is not supported by simploy init.",
+      "Error: An existing Git repository at the project root is not supported by vpsd init.",
     ]);
     await expect(stat(join(root, "app"))).rejects.toThrow();
     await expect(assertRootGitRepositoryAbsent(root)).rejects.toEqual(
       new GitRepositoryInitializationError(
-        "An existing Git repository at the project root is not supported by simploy init.",
+        "An existing Git repository at the project root is not supported by vpsd init.",
       ),
     );
   });

@@ -30,7 +30,7 @@ afterEach(async () => {
 });
 
 async function makeRoot(): Promise<string> {
-  const root = await mkdtemp(join(tmpdir(), "simploy-plan-"));
+  const root = await mkdtemp(join(tmpdir(), "vpsd-plan-"));
   roots.push(root);
   return root;
 }
@@ -42,7 +42,7 @@ describe("initialization planning", () => {
 
     expect(plan.managedPaths).toEqual([
       "app",
-      "simploy",
+      "vpsd",
       "services",
       "services/supabase",
       "supabase",
@@ -79,10 +79,10 @@ describe("initialization planning", () => {
     );
 
     expect(plan.conflicts).toEqual(["app"]);
-    expect(reports).toEqual(["Existing Simploy-managed targets: app"]);
+    expect(reports).toEqual(["Existing VPSD-managed targets: app"]);
     expect(prompts).toEqual(["Replace all listed targets?"]);
     expect(accepted).toBe(true);
-    await expect(stat(join(root, "simploy"))).rejects.toThrow();
+    await expect(stat(join(root, "vpsd"))).rejects.toThrow();
   });
 
   it("aborts declined replacement without creating partial project content", async () => {
@@ -97,7 +97,7 @@ describe("initialization planning", () => {
     );
 
     expect(accepted).toBe(false);
-    await expect(stat(join(root, "simploy"))).rejects.toThrow();
+    await expect(stat(join(root, "vpsd"))).rejects.toThrow();
     await expect(stat(join(root, ".github", "workflows"))).rejects.toThrow();
   });
 });

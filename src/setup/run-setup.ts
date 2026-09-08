@@ -48,7 +48,7 @@ export function createSetupScriptInvocation(
   return {
     command: sudo,
     arguments: [
-      "--preserve-env=DEPLOY_USER,SIMPLOY_DEPLOY_PATH,SIMPLOY_CADDY_CONFIG_PATH",
+      "--preserve-env=DEPLOY_USER,VPSD_DEPLOY_PATH,VPSD_CADDY_CONFIG_PATH",
       "bash",
       scriptPath,
       ...scriptArguments,

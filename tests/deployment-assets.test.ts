@@ -36,7 +36,7 @@ afterEach(async () => {
 });
 
 async function makeRoot(): Promise<string> {
-  const root = await mkdtemp(join(tmpdir(), "simploy-assets-"));
+  const root = await mkdtemp(join(tmpdir(), "vpsd-assets-"));
   roots.push(root);
   return root;
 }
@@ -68,10 +68,8 @@ describe("core deployment assets", () => {
     expect(first.compose).not.toContain("docker.sock");
     expect(first.compose).not.toContain("volumes:");
     expect(first.compose).not.toContain("supabase");
-    expect(first.compose).toContain("simploy-ingress");
-    expect(first.compose).toContain(
-      `\${SIMPLOY_INGRESS_NETWORK:-simploy-ingress}`,
-    );
+    expect(first.compose).toContain("vpsd-ingress");
+    expect(first.compose).toContain(`\${VPSD_INGRESS_NETWORK:-vpsd-ingress}`);
     expect(first.compose).not.toContain("caddy");
     expect(first.caddyfile).toContain("reverse_proxy 127.0.0.1:{$APP_PORT}");
   });
@@ -91,27 +89,27 @@ describe("core deployment assets", () => {
     expect(assets.compose).toContain(`${"${"}APP_PORT}`);
   });
 
-  it("writes exactly the core assets and replaces an accepted existing simploy directory", async () => {
+  it("writes exactly the core assets and replaces an accepted existing vpsd directory", async () => {
     const root = await makeRoot();
-    await mkdir(join(root, "simploy"));
-    await writeFile(join(root, "simploy", "stale.txt"), "stale");
+    await mkdir(join(root, "vpsd"));
+    await writeFile(join(root, "vpsd", "stale.txt"), "stale");
 
     await writeCoreDeploymentAssets(root, defaults, true);
 
-    expect(await readdir(join(root, "simploy"))).toEqual([
+    expect(await readdir(join(root, "vpsd"))).toEqual([
       "Caddyfile",
       "compose.yml",
       "deploy.env",
     ]);
     await expect(
-      readFile(join(root, "simploy", "deploy.env"), "utf8"),
+      readFile(join(root, "vpsd", "deploy.env"), "utf8"),
     ).resolves.toBe("DOMAIN=app.localhost\nAPP_PORT=3000\n");
     const templates = getCoreDeploymentTemplatePaths();
     await expect(
-      readFile(join(root, "simploy", "compose.yml"), "utf8"),
+      readFile(join(root, "vpsd", "compose.yml"), "utf8"),
     ).resolves.toBe(await readFile(templates.compose, "utf8"));
     await expect(
-      readFile(join(root, "simploy", "Caddyfile"), "utf8"),
+      readFile(join(root, "vpsd", "Caddyfile"), "utf8"),
     ).resolves.toBe(await readFile(templates.caddyfile, "utf8"));
   });
 });

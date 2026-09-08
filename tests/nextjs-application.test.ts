@@ -25,7 +25,7 @@ import {
 
 class NonInteractivePrompter implements InitPrompter {
   public async ask(): Promise<string | undefined> {
-    throw new Error("No Simploy prompts expected.");
+    throw new Error("No VPSD prompts expected.");
   }
 
   public showError(): void {}
@@ -36,7 +36,7 @@ class NonInteractivePrompter implements InitPrompter {
 }
 
 async function makeRoot(): Promise<string> {
-  return mkdtemp(join(tmpdir(), "simploy-nextjs-"));
+  return mkdtemp(join(tmpdir(), "vpsd-nextjs-"));
 }
 
 describe("Next.js application initialization", () => {
@@ -69,7 +69,7 @@ describe("Next.js application initialization", () => {
       });
 
       await expect(stat(join(root, "app"))).resolves.toBeDefined();
-      await expect(stat(join(root, "simploy"))).rejects.toThrow();
+      await expect(stat(join(root, "vpsd"))).rejects.toThrow();
       const templates = getNextJsDockerBuildTemplatePaths();
       await expect(
         readFile(join(root, NEXTJS_DOCKERFILE_PATH), "utf8"),
@@ -202,7 +202,7 @@ describe("Next.js application initialization", () => {
         stat(join(root, NEXTJS_DOCKERIGNORE_PATH)),
       ).resolves.toBeDefined();
       await expect(
-        stat(join(root, ".github", "workflows", "simploy-deploy.yml")),
+        stat(join(root, ".github", "workflows", "vpsd-deploy.yml")),
       ).resolves.toBeDefined();
     } finally {
       await rm(root, { recursive: true, force: true });

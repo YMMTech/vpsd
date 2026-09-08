@@ -41,7 +41,7 @@ export async function writeCoreDeploymentAssets(
   input: InitInput,
   replaceExistingDirectory: boolean,
 ): Promise<void> {
-  const directory = join(root, "simploy");
+  const directory = join(root, "vpsd");
   if (replaceExistingDirectory) {
     await rm(directory, { recursive: true, force: true });
   }

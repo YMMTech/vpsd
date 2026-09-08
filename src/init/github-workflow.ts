@@ -7,7 +7,7 @@ const TEMPLATE_PATH = fileURLToPath(
   new URL("../templates/github-deploy.yml", import.meta.url),
 );
 
-export const GITHUB_WORKFLOW_PATH = `${WORKFLOW_DIRECTORY}/simploy-deploy.yml`;
+export const GITHUB_WORKFLOW_PATH = `${WORKFLOW_DIRECTORY}/vpsd-deploy.yml`;
 
 export async function renderGitHubWorkflow(): Promise<string> {
   return readFile(TEMPLATE_PATH, "utf8");

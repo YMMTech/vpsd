@@ -1,6 +1,6 @@
-# Simploy v0 release notes
+# VPSD 0.1.0 — prepared release notes (unpublished)
 
-Simploy v0 initializes a deployment-ready project for one containerized web
+VPSD v0 initializes a deployment-ready project for one containerized web
 application and one preconfigured VPS. Initialization creates the selected
 application target, deployment assets, CI configuration, and optional external
 service integration material.
@@ -17,9 +17,9 @@ service integration material.
 - CI providers: GitHub Actions and GitLab CI/CD. Exactly one is selected per
   project.
 - VPS preparation is available through documented manual steps, the bundled
-  Debian/Ubuntu Bash script, or `simploy setup`. The command elevates the
+  Debian/Ubuntu Bash script, or `vpsd setup`. The command elevates the
   bundled installed script with `sudo` when necessary; it does not deploy
-  applications or install a VPS-side Simploy service. Compatible existing
+  applications or install a VPS-side VPSD service. Compatible existing
   Docker Engine and Compose v2 installations are retained rather than migrated.
 - Next.js output includes a fixed `app/Dockerfile` and standalone output
   configuration for the generated CI and Compose contract.
@@ -31,12 +31,12 @@ service integration material.
 
 The generated CI workflow builds and pushes the application image to its
 provider registry, resolves an immutable image digest, and deploys using the
-committed Compose and Caddy assets. Simploy is not required after initialization.
+committed Compose and Caddy assets. VPSD is not required after initialization.
 
 ## Operator prerequisites
 
-The target VPS must already provide Docker, Docker Compose, OpenSSH, persistent
-Caddy, and the external `simploy-ingress` Docker network. The operator must
+Before deployment, prepare the target VPS with `vpsd setup` or equivalent operator-managed prerequisites: Docker, Docker Compose, OpenSSH, persistent
+Caddy, and the external `vpsd-ingress` Docker network. The operator must
 provide the VPS-side environment values expected by the CI workflow without
 inventing repository-specific paths.
 
@@ -49,22 +49,32 @@ SSH_PRIVATE_KEY
 SSH_KNOWN_HOSTS
 ```
 
-`simploy/deploy.env` is committed and contains only `DOMAIN` and `APP_PORT`.
+`vpsd/deploy.env` is committed and contains only `DOMAIN` and `APP_PORT`.
 Runtime secrets belong in protected CI and runtime configuration, not in that
 file.
 
-Generated deployment CI defaults to `/home/simploy/app`,
+Generated deployment CI defaults to `/home/vpsd/app`,
 `/etc/caddy/Caddyfile`, and SSH port `22`. Operators can override these with
-`SIMPLOY_DEPLOY_PATH`, `SIMPLOY_CADDY_CONFIG_PATH`, and `VPS_PORT`.
+`VPSD_DEPLOY_PATH`, `VPSD_CADDY_CONFIG_PATH`, and `VPS_PORT`.
 
 ## v0 limitations
 
-- Simploy is init-only; CI performs deployment after initialization.
-- The VPS does not run a Simploy service, deployment engine, or SSH gateway.
-- Simploy does not provision or harden the VPS.
+- VPSD provides `init` and explicit `setup`; CI performs deployment after initialization.
+- The VPS does not run a VPSD service, deployment engine, or SSH gateway.
+- VPSD does not provision or harden the VPS.
 - Caddy remains persistent VPS infrastructure, outside the application Compose
   lifecycle.
 - Supabase is external: the operator deploys, operates, upgrades, and backs it
-  up. Simploy does not add Supabase infrastructure to Compose.
+  up. VPSD does not add Supabase infrastructure to Compose.
 - v0 supports one application per repository and one preconfigured VPS.
 - Supabase is not supported with the `none` application target.
+
+## Release preparation and validation
+
+Product: VPSD (VPS Deployment). Package and CLI: `vpsd`. Intended version: `0.1.0`; future tag: `v0.1.0`. These notes are prepared privately, not published.
+
+The deployment path has passed two real end-to-end rounds. Issue 21's corrected deployment returned HTTP 200 through Caddy, and its regression coverage is present. Issue 22 captures the second installation/deployment round. This release preparation verifies the actual packed artifact, without another live VPS deployment.
+
+Deployment filenames, host defaults, and variables now use `vpsd`/`VPSD_*`; existing installations need [coordinated migration](docs/release-preparation.md#deployment-names-and-migration). Application health checks and automatic rollback are not implemented. GitHub and GitLab application deployment templates remain supported.
+
+Publication, the final GitHub destination, and registry-level checks are separate future steps in the [release checklist](docs/release-preparation.md).

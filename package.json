@@ -1,13 +1,16 @@
 {
-  "name": "simploy",
+  "name": "vpsd",
   "version": "0.1.0",
-  "description": "CLI foundation for Simploy v0.",
+  "description": "VPSD \u2014 VPS Deployment: initialize one containerized application and prepare one VPS for CI-driven deployment.",
   "type": "module",
   "files": [
-    "dist"
+    "dist",
+    "docs/installation.md",
+    "docs/release-preparation.md",
+    "RELEASE_NOTES.md"
   ],
   "bin": {
-    "simploy": "./dist/cli/index.js"
+    "vpsd": "./dist/cli/index.js"
   },
   "engines": {
     "node": ">=22"
@@ -18,15 +21,30 @@
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
     "format": "biome format --write .",
-    "presimploy": "pnpm build",
-    "simploy": "node dist/cli/index.js",
     "test": "vitest run",
-    "test:integration": "SIMPLOY_RUN_INTEGRATION_TESTS=1 vitest run --maxWorkers=1 tests/compose-caddy.integration.test.ts"
+    "test:integration": "VPSD_RUN_INTEGRATION_TESTS=1 vitest run --maxWorkers=1 tests/compose-caddy.integration.test.ts",
+    "prevpsd": "pnpm build",
+    "vpsd": "node dist/cli/index.js",
+    "prepack": "pnpm build"
   },
   "devDependencies": {
     "@biomejs/biome": "2.3.9",
     "@types/node": "24.10.1",
     "typescript": "5.9.3",
     "vitest": "4.0.16"
+  },
+  "license": "UNLICENSED",
+  "keywords": [
+    "vps",
+    "deployment",
+    "docker",
+    "docker-compose",
+    "caddy",
+    "github-actions",
+    "gitlab-ci",
+    "nextjs"
+  ],
+  "publishConfig": {
+    "access": "public"
   }
 }

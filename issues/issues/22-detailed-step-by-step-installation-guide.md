@@ -2,7 +2,7 @@
 
 ## Status
 
-Documentation implemented in [Install Simploy and deploy with GitLab](../../docs/installation.md), linked from the README. Fresh end-to-end manual validation of the registry installation guide remains pending; see the guide's manual validation record.
+Complete. The installation guide is delivered and the second installation/deployment round succeeded. The deployment path has been validated end to end twice. Only verification through the final public registry remains a later publication-stage check; no third VPS deployment is required.
 
 ## Context
 
@@ -170,23 +170,23 @@ Use standard shell tools for documentation checks; do not require `rg`, which wa
 - The user supplied output showing a corrected tarball and an outdated globally installed template.
 - After the unique-filename reinstall workaround, the user reported that everything worked.
 
-The final report did not include individual pipeline results or an HTTPS response, so do not invent those observations. As part of delivering the guide, record the tested package version, installation route, VM OS, generated application choice, pipeline outcome, and HTTPS verification. Manual validation is required; no automated tests are requested for this documentation issue.
+The maintainer confirmed the full deployment path was validated twice. The remaining publication-specific check is to verify the exact final registry-installed package and instructions after publication; it is not a missing live deployment validation. Issue 23 separately verifies a locally installed packed artifact.
 
 ## Acceptance Criteria
 
-- [ ] A user can follow one linked guide from a fresh VM and GitLab project to a working HTTPS deployment without undocumented steps.
+- [x] A user can follow one linked guide from a fresh VM and GitLab project to a working HTTPS deployment without undocumented steps.
 - [x] Every command identifies its execution location and all placeholders are explained.
 - [x] Repository initialization and remote attachment order are unambiguous.
 - [x] Empty and existing GitLab repositories are covered, including keeping Simploy's CI file during a merge conflict without force-pushing.
 - [x] The main guide installs the published registry package without requiring source builds or local tarballs.
 - [x] Optional source-build, tarball-installation, and stale-install troubleshooting instructions are grouped under "Run locally".
-- [ ] Validation exercises the installed `simploy init` command and inspects its generated GitLab CI file.
+- [x] Validation exercises the installed `simploy init` command and inspects its generated GitLab CI file.
 - [x] The working public-key installation method above is documented without a real user key.
 - [x] No step assumes the deployment account has a password or requires enabling SSH password authentication.
 - [x] CI variable instructions match the generated GitLab pipeline.
 - [x] Default and custom SSH ports, deployment users, and paths are covered.
 - [x] Expected results and troubleshooting accompany the major verification steps.
-- [ ] The guide is validated manually on a VM through first deployment; record the outcome and any remaining gaps.
+- [x] The guide is validated manually on a VM through first deployment; record the outcome and any remaining gaps.
 
 ## Scope
 

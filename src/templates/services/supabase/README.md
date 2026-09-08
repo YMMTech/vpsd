@@ -1,12 +1,12 @@
 # Supabase integration
 
-This project connects to an existing Supabase project. Simploy does not install,
+This project connects to an existing Supabase project. VPSD does not install,
 deploy, or operate Supabase.
 
 ## Next.js client libraries
 
 The generated Next.js helpers use the official Supabase SSR client packages.
-When Supabase is selected, Simploy adds `@supabase/supabase-js` and
+When Supabase is selected, VPSD adds `@supabase/supabase-js` and
 `@supabase/ssr` to `app/package.json` with pnpm.
 
 ## Generated application boilerplate
@@ -25,7 +25,7 @@ The integration also adds the application-owned migration material in
 convention consumed by the Supabase CLI. Review and apply it to the external
 Supabase instance with the operator's chosen migration process (for example,
 `supabase db push`).
-Simploy does not apply migrations or manage the Supabase instance.
+VPSD does not apply migrations or manage the Supabase instance.
 
 ## Runtime configuration
 
