@@ -5,6 +5,11 @@ preconfigured VPS. A single `simploy init` run creates the selected application
 target, deployment assets, CI configuration, and optional service integration
 material.
 
+**Start here:** [Install Simploy and deploy with GitLab](docs/installation.md)
+walks through registry installation, VM setup, SSH keys, GitLab configuration,
+and the first HTTPS deployment. Source-build instructions are in
+[Run locally](docs/installation.md#run-locally).
+
 Simploy initializes projects and can run an operator-controlled VPS bootstrap
 script. It is not installed as a deployment service on the VPS, and CI does
 not need to install or run Simploy after initialization. The generated GitHub

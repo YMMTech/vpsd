@@ -2,7 +2,7 @@
 
 ## Status
 
-Open — issue specification ready for review. The installation guide itself remains to be delivered and validated against this specification.
+Documentation implemented in [Install Simploy and deploy with GitLab](../../docs/installation.md), linked from the README. Fresh end-to-end manual validation of the registry installation guide remains pending; see the guide's manual validation record.
 
 ## Context
 
@@ -175,17 +175,17 @@ The final report did not include individual pipeline results or an HTTPS respons
 ## Acceptance Criteria
 
 - [ ] A user can follow one linked guide from a fresh VM and GitLab project to a working HTTPS deployment without undocumented steps.
-- [ ] Every command identifies its execution location and all placeholders are explained.
-- [ ] Repository initialization and remote attachment order are unambiguous.
-- [ ] Empty and existing GitLab repositories are covered, including keeping Simploy's CI file during a merge conflict without force-pushing.
-- [ ] The main guide installs the published registry package without requiring source builds or local tarballs.
-- [ ] Optional source-build, tarball-installation, and stale-install troubleshooting instructions are grouped under "Run locally".
+- [x] Every command identifies its execution location and all placeholders are explained.
+- [x] Repository initialization and remote attachment order are unambiguous.
+- [x] Empty and existing GitLab repositories are covered, including keeping Simploy's CI file during a merge conflict without force-pushing.
+- [x] The main guide installs the published registry package without requiring source builds or local tarballs.
+- [x] Optional source-build, tarball-installation, and stale-install troubleshooting instructions are grouped under "Run locally".
 - [ ] Validation exercises the installed `simploy init` command and inspects its generated GitLab CI file.
-- [ ] The working public-key installation method above is documented without a real user key.
-- [ ] No step assumes the deployment account has a password or requires enabling SSH password authentication.
-- [ ] CI variable instructions match the generated GitLab pipeline.
-- [ ] Default and custom SSH ports, deployment users, and paths are covered.
-- [ ] Expected results and troubleshooting accompany the major verification steps.
+- [x] The working public-key installation method above is documented without a real user key.
+- [x] No step assumes the deployment account has a password or requires enabling SSH password authentication.
+- [x] CI variable instructions match the generated GitLab pipeline.
+- [x] Default and custom SSH ports, deployment users, and paths are covered.
+- [x] Expected results and troubleshooting accompany the major verification steps.
 - [ ] The guide is validated manually on a VM through first deployment; record the outcome and any remaining gaps.
 
 ## Scope
